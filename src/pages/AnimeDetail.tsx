@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { getAnimeById, getRecommendations, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
 import AnimeCard from "@/components/AnimeCard";
+import Comments from "@/components/Comments";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +24,8 @@ const AnimeDetail = () => {
   useEffect(() => {
     if (!animeId) return;
     setLoading(true);
+    setImdbId(null);
+    setRecommendations([]);
 
     getAnimeById(animeId)
       .then((data) => {
@@ -31,7 +34,6 @@ const AnimeDetail = () => {
         getImdbId(title)
           .then((res) => setImdbId(res.imdb))
           .catch(() => setImdbId(null));
-        // Fetch recommendations
         getRecommendations(data.genres, animeId)
           .then(setRecommendations)
           .catch(() => setRecommendations([]));
@@ -52,7 +54,6 @@ const AnimeDetail = () => {
       return;
     }
     if (!anime) return;
-
     if (inList) {
       await removeFromWatchlist(user.id, animeId);
       setInList(false);
@@ -109,7 +110,6 @@ const AnimeDetail = () => {
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10 pb-16">
-        {/* Back link */}
         <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
           <ArrowLeft size={16} /> Back
         </Link>
@@ -129,11 +129,8 @@ const AnimeDetail = () => {
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-1 leading-[1.1]">
               {title}
             </h1>
-            {jpTitle && (
-              <p className="text-sm text-muted-foreground mb-3">{jpTitle}</p>
-            )}
+            {jpTitle && <p className="text-sm text-muted-foreground mb-3">{jpTitle}</p>}
 
-            {/* Meta */}
             <div className="flex flex-wrap items-center gap-3 mb-3 text-xs text-muted-foreground">
               {anime.averageScore && (
                 <span className="flex items-center gap-1 text-yellow-400 font-semibold">
@@ -142,49 +139,39 @@ const AnimeDetail = () => {
                 </span>
               )}
               {anime.seasonYear && (
-                <span className="flex items-center gap-1">
-                  <Calendar size={12} /> {anime.seasonYear}
-                </span>
+                <span className="flex items-center gap-1"><Calendar size={12} /> {anime.seasonYear}</span>
               )}
               {anime.episodes && (
-                <span className="flex items-center gap-1">
-                  <Film size={12} /> {anime.episodes} episodes
-                </span>
+                <span className="flex items-center gap-1"><Film size={12} /> {anime.episodes} episodes</span>
               )}
               {anime.duration && (
-                <span className="flex items-center gap-1">
-                  <Clock size={12} /> {anime.duration} min/ep
-                </span>
+                <span className="flex items-center gap-1"><Clock size={12} /> {anime.duration} min/ep</span>
               )}
               {studio && <span>{studio}</span>}
             </div>
 
-            {/* Status badge */}
             {anime.status && (
               <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 mb-3">
                 {anime.status.replace(/_/g, " ")}
               </span>
             )}
 
-            {/* Genres */}
             <div className="flex flex-wrap gap-2 mb-4">
               {anime.genres.map((g) => (
-                <span key={g} className="text-xs px-2.5 py-0.5 rounded-full border border-border text-muted-foreground">
+                <Link key={g} to={`/search?q=${encodeURIComponent(g)}&genre=true`} className="text-xs px-2.5 py-0.5 rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors">
                   {g}
-                </span>
+                </Link>
               ))}
             </div>
 
-            {/* Description */}
             <p className="text-sm text-muted-foreground mb-5 max-w-2xl leading-relaxed">
               {stripHtml(anime.description)}
             </p>
 
-            {/* Buttons */}
             <div className="flex items-center gap-3">
               {imdbId ? (
                 <Link
-                  to={`/watch/${animeId}?imdb=${imdbId}&ep=1&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}`}
+                  to={`/watch/${animeId}?imdb=${imdbId}&ep=1&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}&total=${episodeCount}`}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-accent text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity active:scale-[0.97]"
                 >
                   <Play size={16} fill="currentColor" />
@@ -218,28 +205,44 @@ const AnimeDetail = () => {
         {/* Episodes */}
         <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">Episodes</h2>
         {imdbId ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-            {Array.from({ length: episodeCount }, (_, i) => i + 1).map((ep) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {Array.from({ length: episodeCount }, (_, i) => i + 1).map((ep, idx) => (
               <Link
                 key={ep}
-                to={`/watch/${animeId}?imdb=${imdbId}&ep=${ep}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}`}
-                className="glass glass-hover rounded-lg px-3 py-2.5 text-center text-xs font-medium text-foreground active:scale-[0.97] transition-all"
+                to={`/watch/${animeId}?imdb=${imdbId}&ep=${ep}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}&total=${episodeCount}`}
+                className="glass glass-hover rounded-xl p-3 flex items-center gap-3 group active:scale-[0.97] transition-all animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(idx * 20, 400)}ms` }}
               >
-                EP {ep}
+                <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  <img
+                    src={anime.coverImage.large}
+                    alt={`EP ${ep}`}
+                    className="w-full h-full object-cover opacity-60"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Play size={12} fill="currentColor" className="text-foreground group-hover:text-primary transition-colors" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Episode {ep}</p>
+                  <p className="text-[10px] text-muted-foreground">{anime.duration || 24} min</p>
+                </div>
               </Link>
             ))}
           </div>
         ) : (
           <div className="glass rounded-xl p-8 text-center">
-            <p className="text-muted-foreground text-sm mb-1">Episode streaming is available via the Kogemi API integration.</p>
-            <p className="text-xs text-muted-foreground">Connect a Kogemi API endpoint to enable episode playback.</p>
+            <p className="text-muted-foreground text-sm">Loading episodes...</p>
           </div>
         )}
+
+        {/* Comments */}
+        <Comments animeId={animeId} />
 
         {/* Recommendations */}
         {recommendations.length > 0 && (
           <>
-            <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">More Like This</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">✨ More Like This</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {recommendations.map((item, i) => (
                 <AnimeCard

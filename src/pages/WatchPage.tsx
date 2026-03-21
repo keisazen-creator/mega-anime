@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import { getStreamLinks, type StreamResult } from "@/lib/api";
 import { saveContinueWatching } from "@/lib/watchlist";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft } from "lucide-react";
 
 const WatchPage = () => {
   const { id } = useParams<{ id: string }>();
   const animeId = parseInt(id || "0", 10);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const imdbId = searchParams.get("imdb") || "";
   const episode = parseInt(searchParams.get("ep") || "1", 10);
   const title = searchParams.get("title") || "Anime";
   const img = searchParams.get("img") || "";
+  const totalEps = parseInt(searchParams.get("total") || "0", 10);
 
   const [stream, setStream] = useState<StreamResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,11 +28,10 @@ const WatchPage = () => {
     getStreamLinks(imdbId, 1, episode)
       .then((data) => {
         setStream(data);
-        // Save to continue watching
         saveContinueWatching({
           animeId,
-          animeTitle: title,
-          animeImage: img,
+          animeTitle: decodeURIComponent(title),
+          animeImage: decodeURIComponent(img),
           episode,
           imdbId,
           timestamp: Date.now(),
@@ -39,6 +40,9 @@ const WatchPage = () => {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [imdbId, episode, animeId, title, img]);
+
+  const buildUrl = (ep: number) =>
+    `/watch/${animeId}?imdb=${imdbId}&ep=${ep}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(img)}${totalEps ? `&total=${totalEps}` : ""}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,26 +70,38 @@ const WatchPage = () => {
             <p className="text-muted-foreground">Failed to load stream</p>
           </div>
         ) : (
-          <VideoPlayer primaryUrl={stream.primary} backupUrl={stream.backup} />
+          <VideoPlayer
+            primaryUrl={stream.primary}
+            backupUrl={stream.backup}
+            episode={episode}
+            hasPrev={episode > 1}
+            hasNext={totalEps ? episode < totalEps : true}
+            onPrevEp={() => episode > 1 && navigate(buildUrl(episode - 1))}
+            onNextEp={() => navigate(buildUrl(episode + 1))}
+          />
         )}
 
-        {/* Episode nav */}
-        <div className="flex items-center justify-between mt-4">
-          {episode > 1 ? (
-            <Link
-              to={`/watch/${animeId}?imdb=${imdbId}&ep=${episode - 1}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(img)}`}
-              className="inline-flex items-center gap-1 px-4 py-2 rounded-lg glass glass-hover text-sm text-foreground font-medium active:scale-[0.97]"
-            >
-              <ChevronLeft size={16} /> EP {episode - 1}
-            </Link>
-          ) : <div />}
-          <Link
-            to={`/watch/${animeId}?imdb=${imdbId}&ep=${episode + 1}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(img)}`}
-            className="inline-flex items-center gap-1 px-4 py-2 rounded-lg glass glass-hover text-sm text-foreground font-medium active:scale-[0.97]"
-          >
-            EP {episode + 1} <ChevronRight size={16} />
-          </Link>
-        </div>
+        {/* Quick episode navigation */}
+        {totalEps > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-foreground mb-2">Episodes</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from({ length: Math.min(totalEps, 50) }, (_, i) => i + 1).map((ep) => (
+                <Link
+                  key={ep}
+                  to={buildUrl(ep)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
+                    ep === episode
+                      ? "bg-primary text-primary-foreground glow-accent-sm"
+                      : "glass glass-hover text-foreground"
+                  }`}
+                >
+                  {ep}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

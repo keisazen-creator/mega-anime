@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      comments: {
+        Row: {
+          anime_id: number
+          content: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          anime_id: number
+          content: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          anime_id?: number
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           anime_genres: string[] | null
@@ -46,6 +70,33 @@ export type Database = {
           anime_year?: number | null
           created_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

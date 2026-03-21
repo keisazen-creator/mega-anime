@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import AnimeCard from "@/components/AnimeCard";
 import { searchAniList, getByGenre, type AniListMedia } from "@/lib/anilist";
-import { Search as SearchIcon, Loader2 } from "lucide-react";
+import { getSearchHistory, addSearchHistory, removeSearchHistoryItem, clearSearchHistory } from "@/lib/searchHistory";
+import { Search as SearchIcon, Loader2, Clock, X, Trash2 } from "lucide-react";
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,11 +13,15 @@ const SearchPage = () => {
   const [query, setQuery] = useState(q);
   const [results, setResults] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState(getSearchHistory());
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     if (!q) return;
     setQuery(q);
     setLoading(true);
+    if (!isGenre) addSearchHistory(q);
+    setHistory(getSearchHistory());
     const fetcher = isGenre ? getByGenre(q) : searchAniList(q);
     fetcher
       .then(setResults)
@@ -27,8 +32,19 @@ const SearchPage = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      setShowHistory(false);
       setSearchParams({ q: query.trim() });
     }
+  };
+
+  const handleClearAll = () => {
+    clearSearchHistory();
+    setHistory([]);
+  };
+
+  const handleRemoveItem = (item: string) => {
+    removeSearchHistoryItem(item);
+    setHistory(getSearchHistory());
   };
 
   return (
@@ -39,16 +55,59 @@ const SearchPage = () => {
           {isGenre ? `${q} Anime` : "Search Anime"}
         </h1>
 
-        <form onSubmit={handleSearch} className="mb-8">
+        <form onSubmit={handleSearch} className="mb-8 relative">
           <div className="relative max-w-xl">
             <SearchIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 200)}
               placeholder="Search for anime..."
               className="w-full pl-11 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             />
           </div>
+
+          {/* Search history dropdown */}
+          {showHistory && history.length > 0 && !q && (
+            <div className="absolute top-full mt-1 max-w-xl w-full glass rounded-xl border border-border z-50 overflow-hidden animate-fade-in">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                  <Clock size={12} /> Recent Searches
+                </span>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleClearAll(); }}
+                  className="text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 size={10} /> Clear all
+                </button>
+              </div>
+              {history.map((item) => (
+                <div key={item} className="flex items-center group">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setQuery(item);
+                      setSearchParams({ q: item });
+                      setShowHistory(false);
+                    }}
+                    className="flex-1 text-left px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    {item}
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); handleRemoveItem(item); }}
+                    className="px-3 py-2 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </form>
 
         {loading ? (

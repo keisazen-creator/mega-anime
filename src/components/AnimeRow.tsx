@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import AnimeCard from "./AnimeCard";
 import type { AniListMedia } from "@/lib/anilist";
@@ -8,9 +9,10 @@ interface AnimeRowProps {
   emoji?: string;
   items: AniListMedia[];
   loading?: boolean;
+  viewAllLink?: string;
 }
 
-const AnimeRow = ({ title, emoji, items, loading }: AnimeRowProps) => {
+const AnimeRow = ({ title, emoji, items, loading, viewAllLink }: AnimeRowProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: "left" | "right") => {
@@ -27,7 +29,15 @@ const AnimeRow = ({ title, emoji, items, loading }: AnimeRowProps) => {
             {emoji && <span>{emoji}</span>}
             {title}
           </h2>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            {viewAllLink && (
+              <Link
+                to={viewAllLink}
+                className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                View All →
+              </Link>
+            )}
             <button onClick={() => scroll("left")} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
               <ChevronLeft size={18} />
             </button>

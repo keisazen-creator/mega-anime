@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, User } from "lucide-react";
+import { Search, Menu, X, User, Heart, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -23,17 +23,22 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-accent flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-gradient-accent flex items-center justify-center animate-pulse-glow">
               <span className="font-display font-bold text-primary-foreground text-sm">O</span>
             </div>
           </Link>
 
-          {/* Right side */}
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+            <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+            <Link to="/search" className="hover:text-foreground transition-colors">Browse</Link>
+            <Link to="/watchlist" className="hover:text-foreground transition-colors">My List</Link>
+          </div>
+
           <div className="flex items-center gap-2">
             {searchOpen ? (
-              <form onSubmit={handleSearch} className="flex items-center gap-2">
+              <form onSubmit={handleSearch} className="flex items-center gap-2 animate-fade-in">
                 <input
                   autoFocus
                   value={query}
@@ -50,6 +55,13 @@ const Navbar = () => {
                 <Search size={20} />
               </button>
             )}
+
+            <Link
+              to="/watchlist"
+              className="hidden md:flex text-muted-foreground hover:text-foreground transition-colors p-2"
+            >
+              <Heart size={18} />
+            </Link>
 
             <Link
               to={user ? "/profile" : "/login"}
@@ -75,12 +87,12 @@ const Navbar = () => {
             {[
               { to: "/", label: "Home" },
               { to: "/search", label: "Browse" },
-              { to: "/genres", label: "Genres" },
               { to: "/watchlist", label: "My List" },
+              { to: "/settings", label: "Settings" },
               { to: user ? "/profile" : "/login", label: user ? "Profile" : "Sign In" },
             ].map((link) => (
               <Link
-                key={link.to}
+                key={link.label}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
