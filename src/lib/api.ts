@@ -26,9 +26,9 @@ async function fetchWithTimeout(url: string, timeout = 15000): Promise<Response>
 
 // Use our edge function for anime-specific IMDB lookup (filters by animation genre)
 export async function getImdbId(title: string): Promise<ImdbResult> {
-  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-  const url = projectId
-    ? `https://${projectId}.supabase.co/functions/v1/anime-imdb?title=${encodeURIComponent(title)}`
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const url = supabaseUrl
+    ? `${supabaseUrl}/functions/v1/anime-imdb?title=${encodeURIComponent(title)}`
     : `${KOGEMI_URL}/imdb?title=${encodeURIComponent(title)}`;
   
   const res = await fetchWithTimeout(url);
