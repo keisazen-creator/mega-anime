@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      favorites: {
+        Row: {
+          anime_genres: string[] | null
+          anime_id: number
+          anime_image: string | null
+          anime_rating: number | null
+          anime_title: string
+          anime_year: number | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          anime_genres?: string[] | null
+          anime_id: number
+          anime_image?: string | null
+          anime_rating?: number | null
+          anime_title: string
+          anime_year?: number | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          anime_genres?: string[] | null
+          anime_id?: number
+          anime_image?: string | null
+          anime_rating?: number | null
+          anime_title?: string
+          anime_year?: number | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
