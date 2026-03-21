@@ -11,6 +11,8 @@ import WatchlistPage from "./pages/WatchlistPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
+import ViewAllPage from "./pages/ViewAllPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/view/:category" element={<ViewAllPage />} />
             <Route path="/genres" element={<SearchPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import HeroSlider from "@/components/HeroSlider";
 import AnimeRow from "@/components/AnimeRow";
-import AnimeCard from "@/components/AnimeCard";
+import MoodPicker from "@/components/MoodPicker";
 import { getTrending, getPopular, getTopRated, getNewReleases, type AniListMedia } from "@/lib/anilist";
-import { getContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { getContinueWatching, removeContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 const genres = [
   { name: "Action", bg: "bg-red-900/40 border-red-800/40" },
@@ -19,10 +20,19 @@ const genres = [
   { name: "Sci-Fi", bg: "bg-cyan-900/40 border-cyan-800/40" },
   { name: "Slice of Life", bg: "bg-green-900/40 border-green-800/40" },
   { name: "Mecha", bg: "bg-orange-900/40 border-orange-800/40" },
+  { name: "Sports", bg: "bg-blue-900/40 border-blue-800/40" },
+  { name: "Mystery", bg: "bg-indigo-900/40 border-indigo-800/40" },
+  { name: "Psychological", bg: "bg-violet-900/40 border-violet-800/40" },
+  { name: "Drama", bg: "bg-amber-900/40 border-amber-800/40" },
+  { name: "Supernatural", bg: "bg-emerald-900/40 border-emerald-800/40" },
+  { name: "Music", bg: "bg-rose-900/40 border-rose-800/40" },
+  { name: "Thriller", bg: "bg-stone-900/40 border-stone-800/40" },
+  { name: "Ecchi", bg: "bg-fuchsia-900/40 border-fuchsia-800/40" },
+  { name: "Mahou Shoujo", bg: "bg-pink-900/40 border-pink-800/40" },
 ];
 
 const ContinueWatchingRow = () => {
-  const items = getContinueWatching();
+  const [items, setItems] = useState<ContinueWatchingItem[]>(getContinueWatching());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (items.length === 0) return null;
@@ -31,6 +41,14 @@ const ContinueWatchingRow = () => {
     if (!scrollRef.current) return;
     const amount = scrollRef.current.clientWidth * 0.75;
     scrollRef.current.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
+  };
+
+  const handleRemove = (animeId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    removeContinueWatching(animeId);
+    setItems((prev) => prev.filter((i) => i.animeId !== animeId));
+    toast.success("Removed from continue watching");
   };
 
   return (
@@ -49,7 +67,7 @@ const ContinueWatchingRow = () => {
           {items.map((item, i) => (
             <Link
               key={item.animeId}
-              to={`/watch/${item.animeId}?imdb=${item.imdbId}&ep=${item.episode}`}
+              to={`/watch/${item.animeId}?imdb=${item.imdbId}&ep=${item.episode}&title=${encodeURIComponent(item.animeTitle)}&img=${encodeURIComponent(item.animeImage)}`}
               className="group relative flex-shrink-0 w-[140px] sm:w-[160px] lg:w-[175px] animate-fade-in-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
@@ -60,6 +78,16 @@ const ContinueWatchingRow = () => {
                     <Play size={18} fill="currentColor" className="text-primary-foreground ml-0.5" />
                   </div>
                 </div>
+
+                {/* Remove button */}
+                <button
+                  onClick={(e) => handleRemove(item.animeId, e)}
+                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/70 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-background/90 opacity-0 group-hover:opacity-100 transition-all z-10"
+                  title="Remove"
+                >
+                  <X size={12} />
+                </button>
+
                 {/* Episode badge + progress bar */}
                 <div className="absolute bottom-0 left-0 right-0">
                   <div className="px-2 pb-2 pt-6 bg-gradient-to-t from-background/90 to-transparent">
@@ -111,10 +139,14 @@ const Index = () => {
 
       <div className="relative z-10 -mt-12">
         <ContinueWatchingRow />
-        <AnimeRow title="Trending Now" emoji="🔥" items={trending} loading={loading} />
-        <AnimeRow title="Top Rated" emoji="⭐" items={topRated} loading={loading} />
-        <AnimeRow title="Most Popular" emoji="💎" items={popular} loading={loading} />
-        <AnimeRow title="New Releases" emoji="🆕" items={newReleases} loading={loading} />
+        <AnimeRow title="Trending Now" emoji="🔥" items={trending} loading={loading} viewAllLink="/view/trending" />
+        <AnimeRow title="Top Rated" emoji="⭐" items={topRated} loading={loading} viewAllLink="/view/top-rated" />
+
+        {/* Mood Picker */}
+        <MoodPicker />
+
+        <AnimeRow title="Most Popular" emoji="💎" items={popular} loading={loading} viewAllLink="/view/popular" />
+        <AnimeRow title="New Releases" emoji="🆕" items={newReleases} loading={loading} viewAllLink="/view/new-releases" />
 
         {/* Browse by Genre */}
         <section className="py-8">
@@ -122,13 +154,13 @@ const Index = () => {
             <h2 className="font-display text-base sm:text-lg font-semibold text-foreground mb-4">
               Browse by Genre
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {genres.map((genre, i) => (
                 <Link
                   key={genre.name}
                   to={`/search?q=${encodeURIComponent(genre.name)}&genre=true`}
                   className={`rounded-xl border p-4 sm:p-5 text-center font-display font-semibold text-sm text-foreground hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${genre.bg} animate-fade-in-up`}
-                  style={{ animationDelay: `${i * 50}ms` }}
+                  style={{ animationDelay: `${i * 30}ms` }}
                 >
                   {genre.name}
                 </Link>
@@ -153,10 +185,10 @@ const Index = () => {
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Browse</h3>
                 <div className="flex flex-col gap-1">
-                  <Link to="/" className="hover:text-foreground transition-colors">Trending</Link>
-                  <Link to="/" className="hover:text-foreground transition-colors">Popular</Link>
-                  <Link to="/" className="hover:text-foreground transition-colors">Top Rated</Link>
-                  <Link to="/" className="hover:text-foreground transition-colors">New Releases</Link>
+                  <Link to="/view/trending" className="hover:text-foreground transition-colors">Trending</Link>
+                  <Link to="/view/popular" className="hover:text-foreground transition-colors">Popular</Link>
+                  <Link to="/view/top-rated" className="hover:text-foreground transition-colors">Top Rated</Link>
+                  <Link to="/view/new-releases" className="hover:text-foreground transition-colors">New Releases</Link>
                 </div>
               </div>
               <div>
@@ -165,6 +197,7 @@ const Index = () => {
                   <Link to="/search?q=Action&genre=true" className="hover:text-foreground transition-colors">Action</Link>
                   <Link to="/search?q=Romance&genre=true" className="hover:text-foreground transition-colors">Romance</Link>
                   <Link to="/search?q=Fantasy&genre=true" className="hover:text-foreground transition-colors">Fantasy</Link>
+                  <Link to="/search?q=Psychological&genre=true" className="hover:text-foreground transition-colors">Psychological</Link>
                 </div>
               </div>
             </div>
