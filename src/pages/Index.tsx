@@ -60,10 +60,16 @@ const ContinueWatchingRow = () => {
                     <Play size={18} fill="currentColor" className="text-primary-foreground ml-0.5" />
                   </div>
                 </div>
-                {/* Episode badge */}
-                <div className="absolute bottom-2 left-2 right-2">
-                  <div className="bg-background/80 backdrop-blur-sm rounded-md px-2 py-1 text-[10px] text-foreground font-medium">
-                    EP {item.episode}
+                {/* Episode badge + progress bar */}
+                <div className="absolute bottom-0 left-0 right-0">
+                  <div className="px-2 pb-2 pt-6 bg-gradient-to-t from-background/90 to-transparent">
+                    <div className="text-[10px] text-foreground font-medium mb-1.5">EP {item.episode}</div>
+                    <div className="w-full h-1 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${Math.min(((item.episode) / 12) * 100, 95)}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
