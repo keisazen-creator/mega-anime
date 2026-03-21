@@ -27,11 +27,14 @@ const AnimeDetail = () => {
     getAnimeById(animeId)
       .then((data) => {
         setAnime(data);
-        // Also fetch IMDB ID using the title
         const title = data.title.english || data.title.romaji;
         getImdbId(title)
           .then((res) => setImdbId(res.imdb))
           .catch(() => setImdbId(null));
+        // Fetch recommendations
+        getRecommendations(data.genres, animeId)
+          .then(setRecommendations)
+          .catch(() => setRecommendations([]));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
