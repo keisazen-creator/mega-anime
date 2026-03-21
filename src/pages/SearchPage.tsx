@@ -2,26 +2,27 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import AnimeCard from "@/components/AnimeCard";
-import { searchAnime, type AnimeSearchResult } from "@/lib/api";
+import { searchAniList, getByGenre, type AniListMedia } from "@/lib/anilist";
 import { Search as SearchIcon, Loader2 } from "lucide-react";
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") || "";
+  const isGenre = searchParams.get("genre") === "true";
   const [query, setQuery] = useState(q);
-  const [results, setResults] = useState<AnimeSearchResult[]>([]);
+  const [results, setResults] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (q) {
-      setQuery(q);
-      setLoading(true);
-      searchAnime(q)
-        .then(setResults)
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false));
-    }
-  }, [q]);
+    if (!q) return;
+    setQuery(q);
+    setLoading(true);
+    const fetcher = isGenre ? getByGenre(q) : searchAniList(q);
+    fetcher
+      .then(setResults)
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false));
+  }, [q, isGenre]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,12 +34,12 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-16 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-6">
-          Search Anime
+      <div className="pt-20 pb-16 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground mb-5">
+          {isGenre ? `${q} Anime` : "Search Anime"}
         </h1>
 
-        <form onSubmit={handleSearch} className="mb-10">
+        <form onSubmit={handleSearch} className="mb-8">
           <div className="relative max-w-xl">
             <SearchIcon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -55,21 +56,24 @@ const SearchPage = () => {
             <Loader2 className="animate-spin text-primary" size={32} />
           </div>
         ) : results.length > 0 ? (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
             {results.map((item, i) => (
               <AnimeCard
                 key={item.id}
+                id={item.id}
                 title={item.title.english || item.title.romaji}
                 image={item.coverImage.large}
-                id={item.id}
-                delay={i * 60}
+                score={item.averageScore}
+                genres={item.genres}
+                year={item.seasonYear}
+                delay={i * 50}
               />
             ))}
           </div>
         ) : q ? (
-          <p className="text-muted-foreground text-center py-20">No results found for "{q}"</p>
+          <p className="text-muted-foreground text-center py-20">No results for "{q}"</p>
         ) : (
-          <p className="text-muted-foreground text-center py-20">Start typing to search for anime</p>
+          <p className="text-muted-foreground text-center py-20">Start typing to search</p>
         )}
       </div>
     </div>
