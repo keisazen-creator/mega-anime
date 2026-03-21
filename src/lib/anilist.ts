@@ -130,13 +130,27 @@ export async function getByGenre(genre: string, perPage = 20): Promise<AniListMe
   return data.Page.media;
 }
 
-// Helper to strip HTML from AniList descriptions
+// Get recommendations for an anime by its genres
+export async function getRecommendations(genres: string[], excludeId: number, perPage = 12): Promise<AniListMedia[]> {
+  // Use the first genre for recommendations
+  const genre = genres[0];
+  if (!genre) return [];
+  const data = (await queryAniList(
+    `query ($genre: String, $perPage: Int) {
+      Page(perPage: $perPage) {
+        media(type: ANIME, genre: $genre, sort: POPULARITY_DESC, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+    }`,
+    { genre, perPage: perPage + 1 }
+  )) as { Page: { media: AniListMedia[] } };
+  return data.Page.media.filter((m) => m.id !== excludeId).slice(0, perPage);
+}
+
 export function stripHtml(html: string | null): string {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
 }
 
-// Format score from 0-100 to X.X
 export function formatScore(score: number | null): string {
   if (!score) return "N/A";
   return (score / 10).toFixed(1);

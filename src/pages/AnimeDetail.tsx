@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { getAnimeById, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
+import { getAnimeById, getRecommendations, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
+import AnimeCard from "@/components/AnimeCard";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +16,7 @@ const AnimeDetail = () => {
 
   const [anime, setAnime] = useState<AniListMedia | null>(null);
   const [imdbId, setImdbId] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [inList, setInList] = useState(false);
 
@@ -25,11 +27,14 @@ const AnimeDetail = () => {
     getAnimeById(animeId)
       .then((data) => {
         setAnime(data);
-        // Also fetch IMDB ID using the title
         const title = data.title.english || data.title.romaji;
         getImdbId(title)
           .then((res) => setImdbId(res.imdb))
           .catch(() => setImdbId(null));
+        // Fetch recommendations
+        getRecommendations(data.genres, animeId)
+          .then(setRecommendations)
+          .catch(() => setRecommendations([]));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -229,6 +234,27 @@ const AnimeDetail = () => {
             <p className="text-muted-foreground text-sm mb-1">Episode streaming is available via the Kogemi API integration.</p>
             <p className="text-xs text-muted-foreground">Connect a Kogemi API endpoint to enable episode playback.</p>
           </div>
+        )}
+
+        {/* Recommendations */}
+        {recommendations.length > 0 && (
+          <>
+            <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">More Like This</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {recommendations.map((item, i) => (
+                <AnimeCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title.english || item.title.romaji}
+                  image={item.coverImage.large}
+                  score={item.averageScore}
+                  genres={item.genres}
+                  year={item.seasonYear}
+                  delay={i * 50}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
