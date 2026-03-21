@@ -24,11 +24,21 @@ const Comments = ({ animeId }: { animeId: number }) => {
   const fetchComments = async () => {
     const { data } = await supabase
       .from("comments")
-      .select("*, profiles(display_name, avatar_url)")
+      .select("*")
       .eq("anime_id", animeId)
       .order("created_at", { ascending: false })
       .limit(50);
-    setComments((data as Comment[]) || []);
+    
+    // Fetch profiles for each unique user
+    const comments = (data || []) as any[];
+    const userIds = [...new Set(comments.map((c) => c.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, display_name, avatar_url")
+      .in("user_id", userIds);
+    
+    const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+    setComments(comments.map((c) => ({ ...c, profiles: profileMap.get(c.user_id) || null })));
     setLoading(false);
   };
 
