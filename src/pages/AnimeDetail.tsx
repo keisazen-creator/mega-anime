@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { getAnimeById, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
+import { getAnimeById, getRecommendations, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
+import AnimeCard from "@/components/AnimeCard";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
