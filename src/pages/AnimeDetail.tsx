@@ -232,6 +232,27 @@ const AnimeDetail = () => {
             <p className="text-xs text-muted-foreground">Connect a Kogemi API endpoint to enable episode playback.</p>
           </div>
         )}
+
+        {/* Recommendations */}
+        {recommendations.length > 0 && (
+          <>
+            <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">More Like This</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+              {recommendations.map((item, i) => (
+                <AnimeCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title.english || item.title.romaji}
+                  image={item.coverImage.large}
+                  score={item.averageScore}
+                  genres={item.genres}
+                  year={item.seasonYear}
+                  delay={i * 50}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
