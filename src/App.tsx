@@ -14,6 +14,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import ViewAllPage from "./pages/ViewAllPage";
 import IdentityCardPage from "./pages/IdentityCardPage";
+import SeasonalPage from "./pages/SeasonalPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
