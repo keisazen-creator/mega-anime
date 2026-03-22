@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getWatchStats, getUserBadges, getTopAnime, getPersonalityTitle,
-  getCardRarity, getUserLevel, BADGES, RARITY_COLORS, type UserStats
+  getCardRarity, getUserLevel, BADGES, RARITY_COLORS, RARITY_BORDER, type UserStats
 } from "@/lib/gamification";
 import { Download, Share2, Loader2, Trophy, Star, Clock, Tv, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
