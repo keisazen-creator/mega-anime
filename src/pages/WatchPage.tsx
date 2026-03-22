@@ -10,6 +10,7 @@ import { Loader2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const WatchPage = () => {
+  const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const animeId = parseInt(id || "0", 10);
   const [searchParams] = useSearchParams();
