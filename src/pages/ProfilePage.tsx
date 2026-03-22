@@ -18,6 +18,8 @@ const ProfilePage = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [badges, setBadges] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
