@@ -33,6 +33,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
             <Link to="/search" className="hover:text-foreground transition-colors">Browse</Link>
+            <Link to="/seasonal" className="hover:text-foreground transition-colors">Seasonal</Link>
             <Link to="/watchlist" className="hover:text-foreground transition-colors">My List</Link>
           </div>
 
