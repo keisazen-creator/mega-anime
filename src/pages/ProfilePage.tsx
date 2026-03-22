@@ -127,7 +127,51 @@ const ProfilePage = () => {
             {user.email}
           </div>
 
+          {/* Stats */}
+          {stats && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="rounded-lg bg-secondary/50 p-2.5 text-center">
+                <Tv size={12} className="mx-auto text-primary mb-1" />
+                <span className="font-display font-bold text-foreground text-sm block">{stats.totalAnime}</span>
+                <span className="text-[9px] text-muted-foreground">Anime</span>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2.5 text-center">
+                <Star size={12} className="mx-auto text-primary mb-1" />
+                <span className="font-display font-bold text-foreground text-sm block">{stats.totalEpisodes}</span>
+                <span className="text-[9px] text-muted-foreground">Episodes</span>
+              </div>
+              <div className="rounded-lg bg-secondary/50 p-2.5 text-center">
+                <Clock size={12} className="mx-auto text-primary mb-1" />
+                <span className="font-display font-bold text-foreground text-sm block">{Math.floor(stats.totalMinutes / 60)}h</span>
+                <span className="text-[9px] text-muted-foreground">Watch Time</span>
+              </div>
+            </div>
+          )}
+
+          {/* Badges Preview */}
+          {badges.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1"><Trophy size={12} className="text-primary" /> Badges</span>
+                <Link to="/identity-card" className="text-[10px] text-primary hover:underline">View All</Link>
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {BADGES.filter(b => badges.includes(b.id)).slice(0, 6).map(b => (
+                  <span key={b.id} className="text-lg" title={b.name}>{b.icon}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
+            <Link
+              to="/identity-card"
+              className="w-full py-2.5 rounded-lg bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 active:scale-[0.97] transition-transform"
+            >
+              <CreditCard size={14} />
+              My Identity Card
+            </Link>
+
             <Link
               to="/settings"
               className="w-full py-2.5 rounded-lg bg-secondary border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2 active:scale-[0.97]"
