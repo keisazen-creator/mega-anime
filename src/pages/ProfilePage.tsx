@@ -34,6 +34,8 @@ const ProfilePage = () => {
           setDisplayName((data as any).display_name || "");
         }
       });
+    getWatchStats(user.id).then(setStats);
+    getUserBadges(user.id).then(setBadges);
   }, [user]);
 
   const handleSignOut = async () => {
