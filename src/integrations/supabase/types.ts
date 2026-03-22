@@ -77,6 +77,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -85,6 +87,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -93,10 +97,78 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banner_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watch_stats: {
+        Row: {
+          anime_genres: string[] | null
+          anime_id: number
+          anime_image: string | null
+          anime_title: string
+          created_at: string
+          episodes_watched: number
+          id: string
+          last_watched_at: string
+          rewatch_count: number
+          total_episodes: number | null
+          total_watch_time_minutes: number
+          user_id: string
+        }
+        Insert: {
+          anime_genres?: string[] | null
+          anime_id: number
+          anime_image?: string | null
+          anime_title: string
+          created_at?: string
+          episodes_watched?: number
+          id?: string
+          last_watched_at?: string
+          rewatch_count?: number
+          total_episodes?: number | null
+          total_watch_time_minutes?: number
+          user_id: string
+        }
+        Update: {
+          anime_genres?: string[] | null
+          anime_id?: number
+          anime_image?: string | null
+          anime_title?: string
+          created_at?: string
+          episodes_watched?: number
+          id?: string
+          last_watched_at?: string
+          rewatch_count?: number
+          total_episodes?: number | null
+          total_watch_time_minutes?: number
           user_id?: string
         }
         Relationships: []
