@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Mail, Camera, Loader2, Settings } from "lucide-react";
+import { getWatchStats, getUserBadges, getUserLevel, getPersonalityTitle, BADGES, RARITY_COLORS, type UserStats } from "@/lib/gamification";
+import { LogOut, Mail, Camera, Loader2, Settings, CreditCard, Trophy, Tv, Star, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
