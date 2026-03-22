@@ -13,6 +13,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import ViewAllPage from "./pages/ViewAllPage";
+import IdentityCardPage from "./pages/IdentityCardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/view/:category" element={<ViewAllPage />} />
+            <Route path="/identity-card" element={<IdentityCardPage />} />
             <Route path="/genres" element={<SearchPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
