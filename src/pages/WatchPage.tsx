@@ -30,16 +30,35 @@ const WatchPage = () => {
     setLoading(true);
     setError(false);
     getStreamLinks(imdbId, 1, episode)
-      .then((data) => {
+      .then(async (data) => {
         setStream(data);
+        const decodedTitle = decodeURIComponent(title);
+        const decodedImg = decodeURIComponent(img);
         saveContinueWatching({
           animeId,
-          animeTitle: decodeURIComponent(title),
-          animeImage: decodeURIComponent(img),
+          animeTitle: decodedTitle,
+          animeImage: decodedImg,
           episode,
           imdbId,
           timestamp: Date.now(),
         });
+        // Track stats + award badges
+        if (user) {
+          const genres = searchParams.get("genres")?.split(",") || [];
+          await upsertWatchStat(user.id, {
+            id: animeId,
+            title: decodedTitle,
+            image: decodedImg,
+            genres,
+            episodes: totalEps || null,
+            duration: null,
+          }, episode);
+          const stats = await getWatchStats(user.id);
+          const newBadges = await checkAndAwardBadges(user.id, stats);
+          if (newBadges.length > 0) {
+            toast.success(`🏆 New badge${newBadges.length > 1 ? "s" : ""} earned!`);
+          }
+        }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
