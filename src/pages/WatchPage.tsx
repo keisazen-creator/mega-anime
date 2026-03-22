@@ -4,7 +4,10 @@ import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import { getStreamLinks, type StreamResult } from "@/lib/api";
 import { saveContinueWatching } from "@/lib/watchlist";
+import { upsertWatchStat, getWatchStats, checkAndAwardBadges } from "@/lib/gamification";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
 
 const WatchPage = () => {
   const { id } = useParams<{ id: string }>();
