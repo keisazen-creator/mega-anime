@@ -146,6 +146,66 @@ export async function getRecommendations(genres: string[], excludeId: number, pe
   return data.Page.media.filter((m) => m.id !== excludeId).slice(0, perPage);
 }
 
+// Extended media fields with airing schedule
+export interface AniListMediaExtended extends AniListMedia {
+  nextAiringEpisode: { episode: number; airingAt: number; timeUntilAiring: number } | null;
+  season: string | null;
+}
+
+const MEDIA_FIELDS_EXT = `
+  ${MEDIA_FIELDS}
+  season
+  nextAiringEpisode { episode airingAt timeUntilAiring }
+`;
+
+// Seasonal anime
+export async function getSeasonalAnime(
+  season: "WINTER" | "SPRING" | "SUMMER" | "FALL",
+  year: number,
+  page = 1,
+  perPage = 20
+): Promise<AniListMedia[]> {
+  const data = (await queryAniList(
+    `query ($season: MediaSeason, $year: Int, $page: Int, $perPage: Int) {
+      Page(page: $page, perPage: $perPage) {
+        media(type: ANIME, season: $season, seasonYear: $year, sort: POPULARITY_DESC, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+    }`,
+    { season, year, page, perPage }
+  )) as { Page: { media: AniListMedia[] } };
+  return data.Page.media;
+}
+
+// Random anime
+export async function getRandomAnime(): Promise<AniListMedia> {
+  const randomPage = Math.floor(Math.random() * 100) + 1;
+  const data = (await queryAniList(
+    `query ($page: Int) {
+      Page(page: $page, perPage: 1) {
+        media(type: ANIME, sort: POPULARITY_DESC, isAdult: false, averageScore_greater: 60) { ${MEDIA_FIELDS} }
+      }
+    }`,
+    { page: randomPage }
+  )) as { Page: { media: AniListMedia[] } };
+  return data.Page.media[0];
+}
+
+// Airing schedule (currently airing anime)
+export async function getAiringSchedule(perPage = 12): Promise<AniListMedia[]> {
+  const data = (await queryAniList(
+    `query ($perPage: Int) {
+      Page(perPage: $perPage) {
+        media(type: ANIME, status: RELEASING, sort: POPULARITY_DESC, isAdult: false) {
+          ${MEDIA_FIELDS}
+          nextAiringEpisode { episode airingAt timeUntilAiring }
+        }
+      }
+    }`,
+    { perPage }
+  )) as { Page: { media: AniListMedia[] } };
+  return data.Page.media;
+}
+
 export function stripHtml(html: string | null): string {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
@@ -154,4 +214,13 @@ export function stripHtml(html: string | null): string {
 export function formatScore(score: number | null): string {
   if (!score) return "N/A";
   return (score / 10).toFixed(1);
+}
+
+export function getCurrentSeason(): { season: "WINTER" | "SPRING" | "SUMMER" | "FALL"; year: number } {
+  const month = new Date().getMonth() + 1;
+  const year = new Date().getFullYear();
+  if (month <= 3) return { season: "WINTER", year };
+  if (month <= 6) return { season: "SPRING", year };
+  if (month <= 9) return { season: "SUMMER", year };
+  return { season: "FALL", year };
 }

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import HeroSlider from "@/components/HeroSlider";
 import AnimeRow from "@/components/AnimeRow";
 import MoodPicker from "@/components/MoodPicker";
-import { getTrending, getPopular, getTopRated, getNewReleases, type AniListMedia } from "@/lib/anilist";
+import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, type AniListMedia } from "@/lib/anilist";
 import { getContinueWatching, removeContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
-import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -30,6 +30,16 @@ const genres = [
   { name: "Ecchi", bg: "bg-fuchsia-900/40 border-fuchsia-800/40" },
   { name: "Mahou Shoujo", bg: "bg-pink-900/40 border-pink-800/40" },
 ];
+
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return "Airing now";
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 const ContinueWatchingRow = () => {
   const [items, setItems] = useState<ContinueWatchingItem[]>(getContinueWatching());
@@ -78,8 +88,6 @@ const ContinueWatchingRow = () => {
                     <Play size={18} fill="currentColor" className="text-primary-foreground ml-0.5" />
                   </div>
                 </div>
-
-                {/* Remove button */}
                 <button
                   onClick={(e) => handleRemove(item.animeId, e)}
                   className="absolute top-2 right-2 w-6 h-6 rounded-full bg-background/70 flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-background/90 opacity-0 group-hover:opacity-100 transition-all z-10"
@@ -87,16 +95,11 @@ const ContinueWatchingRow = () => {
                 >
                   <X size={12} />
                 </button>
-
-                {/* Episode badge + progress bar */}
                 <div className="absolute bottom-0 left-0 right-0">
                   <div className="px-2 pb-2 pt-6 bg-gradient-to-t from-background/90 to-transparent">
                     <div className="text-[10px] text-foreground font-medium mb-1.5">EP {item.episode}</div>
                     <div className="w-full h-1 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Math.min(((item.episode) / 12) * 100, 95)}%` }}
-                      />
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(((item.episode) / 12) * 100, 95)}%` }} />
                     </div>
                   </div>
                 </div>
@@ -110,12 +113,69 @@ const ContinueWatchingRow = () => {
   );
 };
 
+// Airing Schedule Section
+const AiringSection = ({ anime }: { anime: AniListMedia[] }) => {
+  if (anime.length === 0) return null;
+  return (
+    <section className="py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-display text-base sm:text-lg font-semibold text-foreground flex items-center gap-2">
+            <Clock size={16} className="text-primary" />
+            Airing Schedule
+          </h2>
+          <Link to="/seasonal" className="text-xs text-primary hover:underline flex items-center gap-1">
+            <Calendar size={12} /> Seasonal
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {anime.slice(0, 6).map((item, i) => {
+            const nae = item.nextAiringEpisode as any;
+            return (
+              <Link
+                key={item.id}
+                to={`/anime/${item.id}`}
+                className="flex gap-3 glass rounded-xl p-3 border border-white/5 hover:border-primary/20 transition-all group animate-fade-in-up active:scale-[0.98]"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <div className="w-14 h-20 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                  <img src={item.coverImage.large} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <p className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                    {item.title.english || item.title.romaji}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{item.genres?.slice(0, 2).join(" • ")}</p>
+                  {nae && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-green-500/20 text-green-400 font-semibold">
+                        EP {nae.episode}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock size={8} />
+                        {formatCountdown(nae.timeUntilAiring)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Index = () => {
+  const navigate = useNavigate();
   const [trending, setTrending] = useState<AniListMedia[]>([]);
   const [popular, setPopular] = useState<AniListMedia[]>([]);
   const [topRated, setTopRated] = useState<AniListMedia[]>([]);
   const [newReleases, setNewReleases] = useState<AniListMedia[]>([]);
+  const [airing, setAiring] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [randomLoading, setRandomLoading] = useState(false);
 
   useEffect(() => {
     Promise.allSettled([
@@ -123,14 +183,30 @@ const Index = () => {
       getPopular(1, 20),
       getTopRated(1, 20),
       getNewReleases(1, 20),
-    ]).then(([t, p, tr, nr]) => {
+      getAiringSchedule(12),
+    ]).then(([t, p, tr, nr, air]) => {
       if (t.status === "fulfilled") setTrending(t.value);
       if (p.status === "fulfilled") setPopular(p.value);
       if (tr.status === "fulfilled") setTopRated(tr.value);
       if (nr.status === "fulfilled") setNewReleases(nr.value);
+      if (air.status === "fulfilled") setAiring(air.value);
       setLoading(false);
     });
   }, []);
+
+  const handleRandomAnime = async () => {
+    setRandomLoading(true);
+    try {
+      const anime = await getRandomAnime();
+      if (anime) navigate(`/anime/${anime.id}`);
+    } catch {
+      toast.error("Could not fetch random anime");
+    }
+    setRandomLoading(false);
+  };
+
+  const currentSeason = getCurrentSeason();
+  const seasonLabel = currentSeason.season.charAt(0) + currentSeason.season.slice(1).toLowerCase();
 
   return (
     <div className="min-h-screen bg-background">
@@ -138,11 +214,35 @@ const Index = () => {
       <HeroSlider items={trending.slice(0, 6)} />
 
       <div className="relative z-10 -mt-12">
+        {/* Random Anime Button */}
+        <section className="py-4">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap gap-3">
+            <button
+              onClick={handleRandomAnime}
+              disabled={randomLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-medium active:scale-[0.97] transition-transform disabled:opacity-50"
+            >
+              <Shuffle size={14} className={randomLoading ? "animate-spin" : ""} />
+              {randomLoading ? "Finding..." : "Random Anime"}
+            </button>
+            <Link
+              to="/seasonal"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors active:scale-[0.97]"
+            >
+              <Calendar size={14} />
+              {seasonLabel} {currentSeason.year}
+            </Link>
+          </div>
+        </section>
+
         <ContinueWatchingRow />
+
+        {/* Airing Schedule */}
+        <AiringSection anime={airing} />
+
         <AnimeRow title="Trending Now" emoji="🔥" items={trending} loading={loading} viewAllLink="/view/trending" />
         <AnimeRow title="Top Rated" emoji="⭐" items={topRated} loading={loading} viewAllLink="/view/top-rated" />
 
-        {/* Mood Picker */}
         <MoodPicker />
 
         <AnimeRow title="Most Popular" emoji="💎" items={popular} loading={loading} viewAllLink="/view/popular" />
@@ -188,7 +288,16 @@ const Index = () => {
                   <Link to="/view/trending" className="hover:text-foreground transition-colors">Trending</Link>
                   <Link to="/view/popular" className="hover:text-foreground transition-colors">Popular</Link>
                   <Link to="/view/top-rated" className="hover:text-foreground transition-colors">Top Rated</Link>
-                  <Link to="/view/new-releases" className="hover:text-foreground transition-colors">New Releases</Link>
+                  <Link to="/seasonal" className="hover:text-foreground transition-colors">Seasonal</Link>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Features</h3>
+                <div className="flex flex-col gap-1">
+                  <Link to="/identity-card" className="hover:text-foreground transition-colors">Identity Card</Link>
+                  <Link to="/watchlist" className="hover:text-foreground transition-colors">Watchlist</Link>
+                  <Link to="/profile" className="hover:text-foreground transition-colors">Profile</Link>
+                  <Link to="/settings" className="hover:text-foreground transition-colors">Settings</Link>
                 </div>
               </div>
               <div>
