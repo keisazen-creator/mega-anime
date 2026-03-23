@@ -39,6 +39,9 @@ const AnimeDetail = () => {
         getRecommendations(data.genres, animeId)
           .then(setRecommendations)
           .catch(() => setRecommendations([]));
+        getRelatedSeasons(animeId)
+          .then(setRelatedSeasons)
+          .catch(() => setRelatedSeasons([]));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
