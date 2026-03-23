@@ -36,6 +36,9 @@ const Navbar = () => {
             <Link to="/search" className="hover:text-foreground transition-colors">Browse</Link>
             <Link to="/seasonal" className="hover:text-foreground transition-colors">Seasonal</Link>
             <Link to="/watchlist" className="hover:text-foreground transition-colors">My List</Link>
+            <Link to="/voting" className="hover:text-foreground transition-colors flex items-center gap-1">
+              <Trophy size={14} /> Awards
+            </Link>
           </div>
 
           <div className="flex items-center gap-1">
