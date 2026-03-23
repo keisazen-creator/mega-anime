@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Menu, X, User, Heart, Settings } from "lucide-react";
+import { Search, Menu, X, User, Heart, Settings, Trophy } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import NotificationBell from "@/components/NotificationBell";
@@ -36,6 +36,9 @@ const Navbar = () => {
             <Link to="/search" className="hover:text-foreground transition-colors">Browse</Link>
             <Link to="/seasonal" className="hover:text-foreground transition-colors">Seasonal</Link>
             <Link to="/watchlist" className="hover:text-foreground transition-colors">My List</Link>
+            <Link to="/voting" className="hover:text-foreground transition-colors flex items-center gap-1">
+              <Trophy size={14} /> Awards
+            </Link>
           </div>
 
           <div className="flex items-center gap-1">
@@ -93,6 +96,7 @@ const Navbar = () => {
               { to: "/search", label: "Browse" },
               { to: "/seasonal", label: "Seasonal" },
               { to: "/watchlist", label: "My List" },
+              { to: "/voting", label: "🏆 Awards" },
               { to: "/identity-card", label: "Identity Card" },
               { to: "/settings", label: "Settings" },
               { to: user ? "/profile" : "/login", label: user ? "Profile" : "Sign In" },

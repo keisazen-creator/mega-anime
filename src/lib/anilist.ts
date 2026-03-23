@@ -247,6 +247,42 @@ export async function getAiringSchedule(perPage = 12): Promise<AniListMedia[]> {
   return data.Page.media;
 }
 
+export async function getRelatedSeasons(animeId: number): Promise<{ id: number; title: string; relationType: string; format: string | null; status: string | null; coverImage: string; seasonYear: number | null }[]> {
+  const data = (await queryAniList(
+    `query ($id: Int) {
+      Media(id: $id, type: ANIME) {
+        relations {
+          edges {
+            relationType
+            node {
+              id
+              title { english romaji }
+              format
+              status
+              seasonYear
+              coverImage { large }
+            }
+          }
+        }
+      }
+    }`,
+    { id: animeId }
+  )) as any;
+  
+  const edges = data?.Media?.relations?.edges || [];
+  return edges
+    .filter((e: any) => ["SEQUEL", "PREQUEL", "PARENT", "SIDE_STORY", "ALTERNATIVE"].includes(e.relationType) && e.node)
+    .map((e: any) => ({
+      id: e.node.id,
+      title: e.node.title.english || e.node.title.romaji,
+      relationType: e.relationType,
+      format: e.node.format,
+      status: e.node.status,
+      coverImage: e.node.coverImage.large,
+      seasonYear: e.node.seasonYear,
+    }));
+}
+
 export function stripHtml(html: string | null): string {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
