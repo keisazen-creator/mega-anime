@@ -108,6 +108,47 @@ export async function searchAniList(query: string, perPage = 20): Promise<AniLis
   return data.Page.media;
 }
 
+export interface AdvancedSearchParams {
+  query?: string;
+  genres?: string[];
+  year?: number;
+  season?: "WINTER" | "SPRING" | "SUMMER" | "FALL";
+  status?: "FINISHED" | "RELEASING" | "NOT_YET_RELEASED" | "CANCELLED";
+  format?: "TV" | "TV_SHORT" | "MOVIE" | "SPECIAL" | "OVA" | "ONA" | "MUSIC";
+  sort?: string;
+  minScore?: number;
+  perPage?: number;
+  page?: number;
+}
+
+export async function advancedSearch(params: AdvancedSearchParams): Promise<AniListMedia[]> {
+  const {
+    query, genres, year, season, status, format,
+    sort = "POPULARITY_DESC", minScore, perPage = 30, page = 1
+  } = params;
+
+  const variables: Record<string, unknown> = { page, perPage, sort: [sort] };
+  const varDefs: string[] = ["$page: Int", "$perPage: Int", "$sort: [MediaSort]"];
+  const filters: string[] = ["type: ANIME", "isAdult: false", "sort: $sort"];
+
+  if (query) { variables.search = query; varDefs.push("$search: String"); filters.push("search: $search"); }
+  if (genres && genres.length) { variables.genres = genres; varDefs.push("$genres: [String]"); filters.push("genre_in: $genres"); }
+  if (year) { variables.year = year; varDefs.push("$year: Int"); filters.push("seasonYear: $year"); }
+  if (season) { variables.season = season; varDefs.push("$season: MediaSeason"); filters.push("season: $season"); }
+  if (status) { variables.status = status; varDefs.push("$status: MediaStatus"); filters.push("status: $status"); }
+  if (format) { variables.format = format; varDefs.push("$format: MediaFormat"); filters.push("format: $format"); }
+  if (minScore) { variables.minScore = minScore; varDefs.push("$minScore: Int"); filters.push("averageScore_greater: $minScore"); }
+
+  const gql = `query (${varDefs.join(", ")}) {
+    Page(page: $page, perPage: $perPage) {
+      media(${filters.join(", ")}) { ${MEDIA_FIELDS} }
+    }
+  }`;
+
+  const data = (await queryAniList(gql, variables)) as { Page: { media: AniListMedia[] } };
+  return data.Page.media;
+}
+
 export async function getAnimeById(id: number): Promise<AniListMedia> {
   const data = (await queryAniList(
     `query ($id: Int) {

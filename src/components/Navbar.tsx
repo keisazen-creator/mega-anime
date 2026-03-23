@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Search, Menu, X, User, Heart, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 
 const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -37,7 +38,7 @@ const Navbar = () => {
             <Link to="/watchlist" className="hover:text-foreground transition-colors">My List</Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {searchOpen ? (
               <form onSubmit={handleSearch} className="flex items-center gap-2 animate-fade-in">
                 <input
@@ -56,6 +57,8 @@ const Navbar = () => {
                 <Search size={20} />
               </button>
             )}
+
+            <NotificationBell />
 
             <Link
               to="/watchlist"

@@ -6,7 +6,7 @@ import AnimeRow from "@/components/AnimeRow";
 import MoodPicker from "@/components/MoodPicker";
 import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, type AniListMedia } from "@/lib/anilist";
 import { getContinueWatching, removeContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
-import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar, SlidersHorizontal } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
@@ -214,24 +214,34 @@ const Index = () => {
       <HeroSlider items={trending.slice(0, 6)} />
 
       <div className="relative z-10 -mt-12">
-        {/* Random Anime Button */}
-        <section className="py-4">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap gap-3">
-            <button
-              onClick={handleRandomAnime}
-              disabled={randomLoading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-medium active:scale-[0.97] transition-transform disabled:opacity-50"
-            >
-              <Shuffle size={14} className={randomLoading ? "animate-spin" : ""} />
-              {randomLoading ? "Finding..." : "Random Anime"}
-            </button>
-            <Link
-              to="/seasonal"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors active:scale-[0.97]"
-            >
-              <Calendar size={14} />
-              {seasonLabel} {currentSeason.year}
-            </Link>
+        {/* Discovery Bar */}
+        <section className="py-5">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="glass rounded-2xl border border-border p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-4">
+              <button
+                onClick={handleRandomAnime}
+                disabled={randomLoading}
+                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground text-base font-bold active:scale-[0.97] transition-all disabled:opacity-50 shadow-lg hover:shadow-primary/30 hover:scale-[1.02]"
+              >
+                <Shuffle size={20} className={randomLoading ? "animate-spin" : "animate-bounce"} />
+                {randomLoading ? "Finding..." : "🎲 Random Anime"}
+              </button>
+              <div className="hidden sm:block w-px h-10 bg-border" />
+              <Link
+                to="/seasonal"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-secondary border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors active:scale-[0.97]"
+              >
+                <Calendar size={16} />
+                {seasonLabel} {currentSeason.year}
+              </Link>
+              <Link
+                to="/search"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-secondary border border-border text-foreground text-sm font-medium hover:bg-muted transition-colors active:scale-[0.97]"
+              >
+                <SlidersHorizontal size={16} />
+                Advanced Search
+              </Link>
+            </div>
           </div>
         </section>
 
