@@ -18,6 +18,7 @@ const AnimeDetail = () => {
   const [anime, setAnime] = useState<AniListMedia | null>(null);
   const [imdbId, setImdbId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<AniListMedia[]>([]);
+  const [relatedSeasons, setRelatedSeasons] = useState<{ id: number; title: string; relationType: string; format: string | null; status: string | null; coverImage: string; seasonYear: number | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [inList, setInList] = useState(false);
 
