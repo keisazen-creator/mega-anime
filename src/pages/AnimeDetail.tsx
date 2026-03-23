@@ -207,6 +207,36 @@ const AnimeDetail = () => {
           </div>
         </div>
 
+        {/* Related Seasons */}
+        {relatedSeasons.length > 0 && (
+          <div className="mt-10">
+            <h2 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Layers size={18} className="text-primary" /> Related Seasons
+            </h2>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {relatedSeasons.map((rel, i) => (
+                <Link
+                  key={rel.id}
+                  to={`/anime/${rel.id}`}
+                  className="flex-shrink-0 w-32 group animate-fade-in-up"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-secondary">
+                    <img src={rel.coverImage} alt={rel.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute top-1.5 left-1.5">
+                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-primary/90 text-primary-foreground">
+                        {rel.relationType.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">{rel.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{rel.seasonYear || ""} {rel.format ? `• ${rel.format}` : ""}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Episodes */}
         <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">Episodes</h2>
         {imdbId ? (
@@ -219,11 +249,7 @@ const AnimeDetail = () => {
                 style={{ animationDelay: `${Math.min(idx * 20, 400)}ms` }}
               >
                 <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                  <img
-                    src={anime.coverImage.large}
-                    alt={`EP ${ep}`}
-                    className="w-full h-full object-cover opacity-60"
-                  />
+                  <img src={anime.coverImage.large} alt={`EP ${ep}`} className="w-full h-full object-cover opacity-60" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <Play size={12} fill="currentColor" className="text-foreground group-hover:text-primary transition-colors" />
                   </div>

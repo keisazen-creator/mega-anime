@@ -39,6 +39,7 @@ const App = () => (
             <Route path="/view/:category" element={<ViewAllPage />} />
             <Route path="/identity-card" element={<IdentityCardPage />} />
             <Route path="/seasonal" element={<SeasonalPage />} />
+            <Route path="/voting" element={<VotingPage />} />
             <Route path="/genres" element={<SearchPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
