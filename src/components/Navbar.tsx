@@ -96,6 +96,7 @@ const Navbar = () => {
               { to: "/search", label: "Browse" },
               { to: "/seasonal", label: "Seasonal" },
               { to: "/watchlist", label: "My List" },
+              { to: "/voting", label: "🏆 Awards" },
               { to: "/identity-card", label: "Identity Card" },
               { to: "/settings", label: "Settings" },
               { to: user ? "/profile" : "/login", label: user ? "Profile" : "Sign In" },
