@@ -128,6 +128,113 @@ export type Database = {
         }
         Relationships: []
       }
+      user_votes: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          nominee_id: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          nominee_id: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          nominee_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_votes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "voting_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_votes_nominee_id_fkey"
+            columns: ["nominee_id"]
+            isOneToOne: false
+            referencedRelation: "voting_nominees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voting_categories: {
+        Row: {
+          category_type: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          year: number
+        }
+        Insert: {
+          category_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          year?: number
+        }
+        Update: {
+          category_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      voting_nominees: {
+        Row: {
+          anime_id: number | null
+          anime_image: string | null
+          anime_title: string
+          category_id: string
+          character_name: string | null
+          created_at: string
+          id: string
+          vote_count: number
+        }
+        Insert: {
+          anime_id?: number | null
+          anime_image?: string | null
+          anime_title: string
+          category_id: string
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          vote_count?: number
+        }
+        Update: {
+          anime_id?: number | null
+          anime_image?: string | null
+          anime_title?: string
+          category_id?: string
+          character_name?: string | null
+          created_at?: string
+          id?: string
+          vote_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voting_nominees_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "voting_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       watch_stats: {
         Row: {
           anime_genres: string[] | null
@@ -178,7 +285,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cast_vote: {
+        Args: { p_category_id: string; p_nominee_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
