@@ -6,7 +6,7 @@ import AnimeRow from "@/components/AnimeRow";
 import MoodPicker from "@/components/MoodPicker";
 import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, type AniListMedia } from "@/lib/anilist";
 import { getContinueWatching, removeContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
-import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar, SlidersHorizontal } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
