@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import { getAnimeById, getRecommendations, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
+import { getAnimeById, getRecommendations, getRelatedSeasons, stripHtml, formatScore, type AniListMedia } from "@/lib/anilist";
 import AnimeCard from "@/components/AnimeCard";
 import Comments from "@/components/Comments";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
-import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft } from "lucide-react";
+import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers } from "lucide-react";
 import { toast } from "sonner";
 
 const AnimeDetail = () => {
