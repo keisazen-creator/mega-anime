@@ -15,6 +15,7 @@ import SettingsPage from "./pages/SettingsPage";
 import ViewAllPage from "./pages/ViewAllPage";
 import IdentityCardPage from "./pages/IdentityCardPage";
 import SeasonalPage from "./pages/SeasonalPage";
+import VotingPage from "./pages/VotingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
