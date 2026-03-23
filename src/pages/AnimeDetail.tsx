@@ -27,6 +27,7 @@ const AnimeDetail = () => {
     setLoading(true);
     setImdbId(null);
     setRecommendations([]);
+    setRelatedSeasons([]);
 
     getAnimeById(animeId)
       .then((data) => {
