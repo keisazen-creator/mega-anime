@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          anime_id: number | null
+          anime_image: string | null
+          anime_title: string | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          anime_id?: number | null
+          anime_image?: string | null
+          anime_title?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          anime_id?: number | null
+          anime_image?: string | null
+          anime_title?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           anime_id: number
@@ -49,6 +79,7 @@ export type Database = {
           created_at: string
           id: string
           user_id: string
+          watch_status: string
         }
         Insert: {
           anime_genres?: string[] | null
@@ -60,6 +91,7 @@ export type Database = {
           created_at?: string
           id?: string
           user_id: string
+          watch_status?: string
         }
         Update: {
           anime_genres?: string[] | null
@@ -71,6 +103,28 @@ export type Database = {
           created_at?: string
           id?: string
           user_id?: string
+          watch_status?: string
+        }
+        Relationships: []
+      }
+      followers: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
         }
         Relationships: []
       }
