@@ -9,6 +9,62 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
+// Paginated episode grid component
+const EpisodeGrid = ({ totalEps, currentEp, buildUrl }: { totalEps: number; currentEp: number; buildUrl: (ep: number) => string }) => {
+  const CHUNK = 100;
+  const totalChunks = Math.ceil(totalEps / CHUNK);
+  const currentChunkIndex = Math.floor((currentEp - 1) / CHUNK);
+  const [activeChunk, setActiveChunk] = useState(currentChunkIndex);
+
+  const start = activeChunk * CHUNK + 1;
+  const end = Math.min((activeChunk + 1) * CHUNK, totalEps);
+
+  return (
+    <div className="mt-6">
+      <h3 className="text-sm font-semibold text-foreground mb-2">Episodes ({totalEps})</h3>
+
+      {/* Range selector for large episode counts */}
+      {totalChunks > 1 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {Array.from({ length: totalChunks }, (_, i) => {
+            const rangeStart = i * CHUNK + 1;
+            const rangeEnd = Math.min((i + 1) * CHUNK, totalEps);
+            return (
+              <button
+                key={i}
+                onClick={() => setActiveChunk(i)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
+                  activeChunk === i
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {rangeStart}–{rangeEnd}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-1.5">
+        {Array.from({ length: end - start + 1 }, (_, i) => start + i).map((ep) => (
+          <Link
+            key={ep}
+            to={buildUrl(ep)}
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
+              ep === currentEp
+                ? "bg-primary text-primary-foreground glow-accent-sm"
+                : "glass glass-hover text-foreground"
+            }`}
+          >
+            {ep}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const WatchPage = () => {
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
