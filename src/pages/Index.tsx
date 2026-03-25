@@ -276,6 +276,11 @@ const Index = () => {
         <MoodPicker />
 
         <AnimeRow title="Most Popular" emoji="💎" items={popular} loading={loading} viewAllLink="/view/popular" />
+
+        {recommended.length > 0 && (
+          <AnimeRow title="Recommended for You" emoji="🧠" items={recommended} loading={false} />
+        )}
+
         <AnimeRow title="New Releases" emoji="🆕" items={newReleases} loading={loading} viewAllLink="/view/new-releases" />
 
         {/* Browse by Genre */}
