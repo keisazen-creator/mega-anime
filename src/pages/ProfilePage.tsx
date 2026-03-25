@@ -24,6 +24,8 @@ const ProfilePage = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [badges, setBadges] = useState<string[]>([]);
   const [topAnime, setTopAnime] = useState<any[]>([]);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
 
   useEffect(() => {
     if (!user) return;
