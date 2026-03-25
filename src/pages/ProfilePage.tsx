@@ -44,6 +44,8 @@ const ProfilePage = () => {
     getWatchStats(user.id).then(setStats);
     getUserBadges(user.id).then(setBadges);
     getTopAnime(user.id, 5).then(setTopAnime);
+    getFollowerCount(user.id).then(setFollowers);
+    getFollowingCount(user.id).then(setFollowing);
   }, [user]);
 
   const handleSignOut = async () => {
