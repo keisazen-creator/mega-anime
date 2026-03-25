@@ -4,8 +4,9 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getWatchStats, getUserBadges, getUserLevel, getPersonalityTitle, getTopAnime, BADGES, RARITY_COLORS, getCardRarity, type UserStats } from "@/lib/gamification";
-import { LogOut, Mail, Camera, Loader2, Settings, CreditCard, Trophy, Tv, Star, Clock, Edit2, ImagePlus } from "lucide-react";
+import { LogOut, Mail, Camera, Loader2, Settings, CreditCard, Trophy, Tv, Star, Clock, Edit2, ImagePlus, Users } from "lucide-react";
 import { toast } from "sonner";
+import { getFollowerCount, getFollowingCount } from "@/lib/social";
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
@@ -23,6 +24,8 @@ const ProfilePage = () => {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [badges, setBadges] = useState<string[]>([]);
   const [topAnime, setTopAnime] = useState<any[]>([]);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -41,6 +44,8 @@ const ProfilePage = () => {
     getWatchStats(user.id).then(setStats);
     getUserBadges(user.id).then(setBadges);
     getTopAnime(user.id, 5).then(setTopAnime);
+    getFollowerCount(user.id).then(setFollowers);
+    getFollowingCount(user.id).then(setFollowing);
   }, [user]);
 
   const handleSignOut = async () => {
@@ -143,6 +148,15 @@ const ProfilePage = () => {
               {profile.display_name || user.email?.split("@")[0]}
             </h1>
             <p className="text-xs text-primary font-semibold">{title}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Users size={10} />
+                <span className="font-semibold text-foreground">{followers}</span> followers
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{following}</span> following
+              </div>
+            </div>
             {level && (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] text-muted-foreground font-medium">Lv.{level.level}</span>

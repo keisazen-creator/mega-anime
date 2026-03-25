@@ -4,8 +4,9 @@ import Navbar from "@/components/Navbar";
 import HeroSlider from "@/components/HeroSlider";
 import AnimeRow from "@/components/AnimeRow";
 import MoodPicker from "@/components/MoodPicker";
-import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, type AniListMedia } from "@/lib/anilist";
-import { getContinueWatching, removeContinueWatching, type ContinueWatchingItem } from "@/lib/watchlist";
+import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, getSmartRecommendations, type AniListMedia } from "@/lib/anilist";
+import { getContinueWatching, removeContinueWatching, getWatchlist, type ContinueWatchingItem } from "@/lib/watchlist";
+import { useAuth } from "@/hooks/useAuth";
 import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar, SlidersHorizontal } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
@@ -169,11 +170,13 @@ const AiringSection = ({ anime }: { anime: AniListMedia[] }) => {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [trending, setTrending] = useState<AniListMedia[]>([]);
   const [popular, setPopular] = useState<AniListMedia[]>([]);
   const [topRated, setTopRated] = useState<AniListMedia[]>([]);
   const [newReleases, setNewReleases] = useState<AniListMedia[]>([]);
   const [airing, setAiring] = useState<AniListMedia[]>([]);
+  const [recommended, setRecommended] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [randomLoading, setRandomLoading] = useState(false);
 
@@ -192,7 +195,24 @@ const Index = () => {
       if (air.status === "fulfilled") setAiring(air.value);
       setLoading(false);
     });
-  }, []);
+
+    // Smart recommendations based on watchlist genres
+    if (user) {
+      getWatchlist(user.id).then(({ data }) => {
+        if (data && data.length > 0) {
+          const allGenres = data.flatMap((d: any) => d.anime_genres || []);
+          const genreCounts: Record<string, number> = {};
+          allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
+          const topGenres = Object.entries(genreCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([g]) => g)
+            .slice(0, 3);
+          const excludeIds = data.map((d: any) => d.anime_id);
+          getSmartRecommendations(topGenres, excludeIds, 20).then(setRecommended);
+        }
+      });
+    }
+  }, [user]);
 
   const handleRandomAnime = async () => {
     setRandomLoading(true);
@@ -256,6 +276,11 @@ const Index = () => {
         <MoodPicker />
 
         <AnimeRow title="Most Popular" emoji="💎" items={popular} loading={loading} viewAllLink="/view/popular" />
+
+        {recommended.length > 0 && (
+          <AnimeRow title="Recommended for You" emoji="🧠" items={recommended} loading={false} />
+        )}
+
         <AnimeRow title="New Releases" emoji="🆕" items={newReleases} loading={loading} viewAllLink="/view/new-releases" />
 
         {/* Browse by Genre */}

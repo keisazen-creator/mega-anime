@@ -283,6 +283,21 @@ export async function getRelatedSeasons(animeId: number): Promise<{ id: number; 
     }));
 }
 
+// Smart recommendations based on user's favorite genres
+export async function getSmartRecommendations(genres: string[], excludeIds: number[] = [], perPage = 20): Promise<AniListMedia[]> {
+  if (genres.length === 0) return [];
+  const topGenres = genres.slice(0, 3);
+  const data = (await queryAniList(
+    `query ($genres: [String], $perPage: Int) {
+      Page(perPage: $perPage) {
+        media(type: ANIME, genre_in: $genres, sort: SCORE_DESC, isAdult: false, averageScore_greater: 70) { ${MEDIA_FIELDS} }
+      }
+    }`,
+    { genres: topGenres, perPage: perPage + excludeIds.length }
+  )) as { Page: { media: AniListMedia[] } };
+  return data.Page.media.filter((m) => !excludeIds.includes(m.id)).slice(0, perPage);
+}
+
 export function stripHtml(html: string | null): string {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
