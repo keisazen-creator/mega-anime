@@ -148,6 +148,15 @@ const ProfilePage = () => {
               {profile.display_name || user.email?.split("@")[0]}
             </h1>
             <p className="text-xs text-primary font-semibold">{title}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Users size={10} />
+                <span className="font-semibold text-foreground">{followers}</span> followers
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{following}</span> following
+              </div>
+            </div>
             {level && (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] text-muted-foreground font-medium">Lv.{level.level}</span>
