@@ -119,7 +119,7 @@ export async function upsertWatchStat(
   anime: { id: number; title: string; image: string; genres: string[]; episodes: number | null; duration: number | null },
   episodeWatched: number
 ) {
-  const dur = anime.duration || 24;
+  const dur = anime.duration || 24; // minutes per episode
 
   // Get existing stat
   const { data: existing } = await supabase
@@ -130,9 +130,15 @@ export async function upsertWatchStat(
     .maybeSingle();
 
   const currentEp = (existing as any)?.episodes_watched || 0;
-  const newEp = Math.max(currentEp, episodeWatched);
-  const totalTime = newEp * dur;
+  const currentTime = (existing as any)?.total_watch_time_minutes || 0;
+  
+  // Only add time for NEW episodes, not re-calculate from episode number
+  const isNewEpisode = episodeWatched > currentEp;
   const isRewatch = episodeWatched <= currentEp && currentEp > 0;
+  
+  const newEp = Math.max(currentEp, episodeWatched);
+  // Add duration for this single episode only if it's new
+  const newTime = isNewEpisode ? currentTime + dur : currentTime;
 
   await supabase.from("watch_stats").upsert({
     user_id: userId,
@@ -142,7 +148,7 @@ export async function upsertWatchStat(
     anime_genres: anime.genres,
     episodes_watched: newEp,
     total_episodes: anime.episodes,
-    total_watch_time_minutes: totalTime,
+    total_watch_time_minutes: newTime,
     rewatch_count: (existing as any)?.rewatch_count + (isRewatch ? 1 : 0) || 0,
     last_watched_at: new Date().toISOString(),
   }, { onConflict: "user_id,anime_id" });
