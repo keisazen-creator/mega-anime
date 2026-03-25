@@ -170,11 +170,13 @@ const AiringSection = ({ anime }: { anime: AniListMedia[] }) => {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [trending, setTrending] = useState<AniListMedia[]>([]);
   const [popular, setPopular] = useState<AniListMedia[]>([]);
   const [topRated, setTopRated] = useState<AniListMedia[]>([]);
   const [newReleases, setNewReleases] = useState<AniListMedia[]>([]);
   const [airing, setAiring] = useState<AniListMedia[]>([]);
+  const [recommended, setRecommended] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [randomLoading, setRandomLoading] = useState(false);
 
