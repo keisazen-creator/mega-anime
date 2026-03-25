@@ -195,7 +195,24 @@ const Index = () => {
       if (air.status === "fulfilled") setAiring(air.value);
       setLoading(false);
     });
-  }, []);
+
+    // Smart recommendations based on watchlist genres
+    if (user) {
+      getWatchlist(user.id).then(({ data }) => {
+        if (data && data.length > 0) {
+          const allGenres = data.flatMap((d: any) => d.anime_genres || []);
+          const genreCounts: Record<string, number> = {};
+          allGenres.forEach((g: string) => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
+          const topGenres = Object.entries(genreCounts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([g]) => g)
+            .slice(0, 3);
+          const excludeIds = data.map((d: any) => d.anime_id);
+          getSmartRecommendations(topGenres, excludeIds, 20).then(setRecommended);
+        }
+      });
+    }
+  }, [user]);
 
   const handleRandomAnime = async () => {
     setRandomLoading(true);
