@@ -105,26 +105,7 @@ const WatchPage = () => {
         )}
 
         {/* Quick episode navigation */}
-        {totalEps > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold text-foreground mb-2">Episodes</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {Array.from({ length: Math.min(totalEps, 50) }, (_, i) => i + 1).map((ep) => (
-                <Link
-                  key={ep}
-                  to={buildUrl(ep)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
-                    ep === episode
-                      ? "bg-primary text-primary-foreground glow-accent-sm"
-                      : "glass glass-hover text-foreground"
-                  }`}
-                >
-                  {ep}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {totalEps > 0 && <EpisodeGrid totalEps={totalEps} currentEp={episode} buildUrl={buildUrl} />}
       </div>
     </div>
   );
