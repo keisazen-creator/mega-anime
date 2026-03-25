@@ -4,8 +4,9 @@ import Navbar from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getWatchStats, getUserBadges, getUserLevel, getPersonalityTitle, getTopAnime, BADGES, RARITY_COLORS, getCardRarity, type UserStats } from "@/lib/gamification";
-import { LogOut, Mail, Camera, Loader2, Settings, CreditCard, Trophy, Tv, Star, Clock, Edit2, ImagePlus } from "lucide-react";
+import { LogOut, Mail, Camera, Loader2, Settings, CreditCard, Trophy, Tv, Star, Clock, Edit2, ImagePlus, Users } from "lucide-react";
 import { toast } from "sonner";
+import { getFollowerCount, getFollowingCount } from "@/lib/social";
 
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
