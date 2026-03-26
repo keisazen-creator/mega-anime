@@ -7,7 +7,7 @@ import Comments from "@/components/Comments";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
-import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers } from "lucide-react";
+import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers, Dna } from "lucide-react";
 import { toast } from "sonner";
 
 const AnimeDetail = () => {
