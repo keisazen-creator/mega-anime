@@ -16,6 +16,7 @@ import ViewAllPage from "./pages/ViewAllPage";
 import IdentityCardPage from "./pages/IdentityCardPage";
 import SeasonalPage from "./pages/SeasonalPage";
 import VotingPage from "./pages/VotingPage";
+import AnimeDNAPage from "./pages/AnimeDNAPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/identity-card" element={<IdentityCardPage />} />
             <Route path="/seasonal" element={<SeasonalPage />} />
             <Route path="/voting" element={<VotingPage />} />
+            <Route path="/dna/:id" element={<AnimeDNAPage />} />
             <Route path="/genres" element={<SearchPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -7,7 +7,7 @@ import Comments from "@/components/Comments";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
-import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers } from "lucide-react";
+import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers, Dna } from "lucide-react";
 import { toast } from "sonner";
 
 const AnimeDetail = () => {
@@ -203,6 +203,14 @@ const AnimeDetail = () => {
               >
                 <Share2 size={14} />
               </button>
+
+              <Link
+                to={`/dna/${animeId}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg glass border border-primary/20 text-primary font-medium text-sm hover:bg-primary/10 transition-colors active:scale-[0.97]"
+              >
+                <Dna size={16} />
+                AnimeDNA
+              </Link>
             </div>
           </div>
         </div>
