@@ -22,6 +22,7 @@ const AnimeDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [inList, setInList] = useState(false);
+  const [activeChunk, setActiveChunk] = useState(0);
 
   const loadAnime = () => {
     if (!animeId) return;
