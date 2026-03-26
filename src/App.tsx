@@ -16,6 +16,7 @@ import ViewAllPage from "./pages/ViewAllPage";
 import IdentityCardPage from "./pages/IdentityCardPage";
 import SeasonalPage from "./pages/SeasonalPage";
 import VotingPage from "./pages/VotingPage";
+import AnimeDNAPage from "./pages/AnimeDNAPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
