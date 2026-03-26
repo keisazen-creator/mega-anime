@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/identity-card" element={<IdentityCardPage />} />
             <Route path="/seasonal" element={<SeasonalPage />} />
             <Route path="/voting" element={<VotingPage />} />
+            <Route path="/dna/:id" element={<AnimeDNAPage />} />
             <Route path="/genres" element={<SearchPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

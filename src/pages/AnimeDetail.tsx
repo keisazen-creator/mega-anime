@@ -203,6 +203,14 @@ const AnimeDetail = () => {
               >
                 <Share2 size={14} />
               </button>
+
+              <Link
+                to={`/dna/${animeId}`}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg glass border border-primary/20 text-primary font-medium text-sm hover:bg-primary/10 transition-colors active:scale-[0.97]"
+              >
+                <Dna size={16} />
+                AnimeDNA
+              </Link>
             </div>
           </div>
         </div>
