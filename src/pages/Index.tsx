@@ -4,32 +4,32 @@ import Navbar from "@/components/Navbar";
 import HeroSlider from "@/components/HeroSlider";
 import AnimeRow from "@/components/AnimeRow";
 import MoodPicker from "@/components/MoodPicker";
-import { getTrending, getPopular, getTopRated, getNewReleases, getAiringSchedule, getRandomAnime, getCurrentSeason, getSmartRecommendations, type AniListMedia } from "@/lib/anilist";
+import { getHomepageData, getRandomAnime, getCurrentSeason, getSmartRecommendations, type AniListMedia } from "@/lib/anilist";
 import { getContinueWatching, removeContinueWatching, getWatchlist, type ContinueWatchingItem } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
-import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Shuffle, Clock, Calendar, SlidersHorizontal, RefreshCw } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
 
 const genres = [
-  { name: "Action", bg: "bg-red-900/40 border-red-800/40" },
-  { name: "Adventure", bg: "bg-teal-900/40 border-teal-800/40" },
-  { name: "Fantasy", bg: "bg-purple-900/40 border-purple-800/40" },
-  { name: "Romance", bg: "bg-pink-900/40 border-pink-800/40" },
-  { name: "Comedy", bg: "bg-yellow-900/40 border-yellow-800/40" },
-  { name: "Horror", bg: "bg-gray-900/40 border-gray-800/40" },
-  { name: "Sci-Fi", bg: "bg-cyan-900/40 border-cyan-800/40" },
-  { name: "Slice of Life", bg: "bg-green-900/40 border-green-800/40" },
-  { name: "Mecha", bg: "bg-orange-900/40 border-orange-800/40" },
-  { name: "Sports", bg: "bg-blue-900/40 border-blue-800/40" },
-  { name: "Mystery", bg: "bg-indigo-900/40 border-indigo-800/40" },
-  { name: "Psychological", bg: "bg-violet-900/40 border-violet-800/40" },
-  { name: "Drama", bg: "bg-amber-900/40 border-amber-800/40" },
-  { name: "Supernatural", bg: "bg-emerald-900/40 border-emerald-800/40" },
-  { name: "Music", bg: "bg-rose-900/40 border-rose-800/40" },
-  { name: "Thriller", bg: "bg-stone-900/40 border-stone-800/40" },
-  { name: "Ecchi", bg: "bg-fuchsia-900/40 border-fuchsia-800/40" },
-  { name: "Mahou Shoujo", bg: "bg-pink-900/40 border-pink-800/40" },
+  { name: "Action", bg: "from-red-600/30 to-red-900/10" },
+  { name: "Adventure", bg: "from-teal-600/30 to-teal-900/10" },
+  { name: "Fantasy", bg: "from-purple-600/30 to-purple-900/10" },
+  { name: "Romance", bg: "from-pink-600/30 to-pink-900/10" },
+  { name: "Comedy", bg: "from-yellow-600/30 to-yellow-900/10" },
+  { name: "Horror", bg: "from-gray-600/30 to-gray-900/10" },
+  { name: "Sci-Fi", bg: "from-cyan-600/30 to-cyan-900/10" },
+  { name: "Slice of Life", bg: "from-green-600/30 to-green-900/10" },
+  { name: "Mecha", bg: "from-orange-600/30 to-orange-900/10" },
+  { name: "Sports", bg: "from-blue-600/30 to-blue-900/10" },
+  { name: "Mystery", bg: "from-indigo-600/30 to-indigo-900/10" },
+  { name: "Psychological", bg: "from-violet-600/30 to-violet-900/10" },
+  { name: "Drama", bg: "from-amber-600/30 to-amber-900/10" },
+  { name: "Supernatural", bg: "from-emerald-600/30 to-emerald-900/10" },
+  { name: "Music", bg: "from-rose-600/30 to-rose-900/10" },
+  { name: "Thriller", bg: "from-stone-600/30 to-stone-900/10" },
+  { name: "Ecchi", bg: "from-fuchsia-600/30 to-fuchsia-900/10" },
+  { name: "Mahou Shoujo", bg: "from-pink-600/30 to-pink-900/10" },
 ];
 
 function formatCountdown(seconds: number): string {
@@ -114,7 +114,6 @@ const ContinueWatchingRow = () => {
   );
 };
 
-// Airing Schedule Section
 const AiringSection = ({ anime }: { anime: AniListMedia[] }) => {
   if (anime.length === 0) return null;
   return (
@@ -136,7 +135,7 @@ const AiringSection = ({ anime }: { anime: AniListMedia[] }) => {
               <Link
                 key={item.id}
                 to={`/anime/${item.id}`}
-                className="flex gap-3 glass rounded-xl p-3 border border-white/5 hover:border-primary/20 transition-all group animate-fade-in-up active:scale-[0.98]"
+                className="flex gap-3 glass rounded-xl p-3 border border-border hover:border-primary/20 transition-all group animate-fade-in-up active:scale-[0.98]"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <div className="w-14 h-20 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
@@ -178,25 +177,32 @@ const Index = () => {
   const [airing, setAiring] = useState<AniListMedia[]>([]);
   const [recommended, setRecommended] = useState<AniListMedia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [randomLoading, setRandomLoading] = useState(false);
 
-  useEffect(() => {
-    Promise.allSettled([
-      getTrending(1, 20),
-      getPopular(1, 20),
-      getTopRated(1, 20),
-      getNewReleases(1, 20),
-      getAiringSchedule(12),
-    ]).then(([t, p, tr, nr, air]) => {
-      if (t.status === "fulfilled") setTrending(t.value);
-      if (p.status === "fulfilled") setPopular(p.value);
-      if (tr.status === "fulfilled") setTopRated(tr.value);
-      if (nr.status === "fulfilled") setNewReleases(nr.value);
-      if (air.status === "fulfilled") setAiring(air.value);
-      setLoading(false);
-    });
+  const loadData = () => {
+    setLoading(true);
+    setError(false);
+    getHomepageData()
+      .then((data) => {
+        setTrending(data.trending);
+        setPopular(data.popular);
+        setTopRated(data.topRated);
+        setNewReleases(data.newReleases);
+        setAiring(data.airing);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  };
 
-    // Smart recommendations based on watchlist genres
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  useEffect(() => {
     if (user) {
       getWatchlist(user.id).then(({ data }) => {
         if (data && data.length > 0) {
@@ -265,9 +271,23 @@ const Index = () => {
           </div>
         </section>
 
-        <ContinueWatchingRow />
+        {/* Error state with retry */}
+        {error && !loading && trending.length === 0 && (
+          <section className="py-16">
+            <div className="max-w-[1400px] mx-auto px-4 text-center">
+              <p className="text-muted-foreground mb-4">Failed to load anime. The API may be temporarily rate-limited.</p>
+              <button
+                onClick={loadData}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity active:scale-[0.97]"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </button>
+            </div>
+          </section>
+        )}
 
-        {/* Airing Schedule */}
+        <ContinueWatchingRow />
         <AiringSection anime={airing} />
 
         <AnimeRow title="Trending Now" emoji="🔥" items={trending} loading={loading} viewAllLink="/view/trending" />
@@ -294,7 +314,7 @@ const Index = () => {
                 <Link
                   key={genre.name}
                   to={`/search?q=${encodeURIComponent(genre.name)}&genre=true`}
-                  className={`rounded-xl border p-4 sm:p-5 text-center font-display font-semibold text-sm text-foreground hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${genre.bg} animate-fade-in-up`}
+                  className={`rounded-xl border border-border p-4 sm:p-5 text-center font-display font-semibold text-sm text-foreground bg-gradient-to-br ${genre.bg} hover:scale-[1.03] hover:border-primary/30 active:scale-[0.97] transition-all duration-200 animate-fade-in-up`}
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
                   {genre.name}
