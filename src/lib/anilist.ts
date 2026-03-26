@@ -36,15 +36,209 @@ const MEDIA_FIELDS = `
   nextAiringEpisode { episode }
 `;
 
-async function queryAniList(query: string, variables: Record<string, unknown>): Promise<unknown> {
-  const res = await fetch(ANILIST_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-  });
-  if (!res.ok) throw new Error("AniList query failed");
-  const data = await res.json();
-  return data?.data;
+async function queryAniList(query: string, variables: Record<string, unknown>, retries = 3): Promise<unknown> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(ANILIST_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables }),
+      });
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
+        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        continue;
+      }
+      if (!res.ok) {
+        if (attempt < retries - 1) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw new Error(`AniList query failed: ${res.status}`);
+      }
+      const data = await res.json();
+      if (data?.errors) {
+        console.warn("AniList errors:", data.errors);
+        if (data.data) return data.data;
+        if (attempt < retries - 1) {
+          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+        throw new Error("AniList returned errors");
+      }
+      return data?.data;
+    } catch (err) {
+      if (attempt < retries - 1) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("AniList query failed after retries");
+}
+
+// Extended query for AnimeDNA - characters, staff, studios
+export interface AniListCharacterEdge {
+  role: string;
+  node: { id: number; name: { full: string }; image: { medium: string } };
+  voiceActors: { id: number; name: { full: string }; image: { medium: string }; languageV2: string }[];
+}
+
+export interface AniListStaffEdge {
+  role: string;
+  node: { id: number; name: { full: string }; image: { medium: string } };
+}
+
+export interface AniListStudioNode {
+  id: number;
+  name: string;
+  isAnimationStudio: boolean;
+}
+
+export interface AnimeDNAData {
+  id: number;
+  title: { romaji: string; english: string | null };
+  coverImage: { large: string; extraLarge: string };
+  bannerImage: string | null;
+  description: string | null;
+  genres: string[];
+  tags: { name: string; rank: number; category: string }[];
+  averageScore: number | null;
+  popularity: number | null;
+  episodes: number | null;
+  seasonYear: number | null;
+  status: string | null;
+  format: string | null;
+  source: string | null;
+  studios: { nodes: AniListStudioNode[] };
+  characters: { edges: AniListCharacterEdge[] };
+  staff: { edges: AniListStaffEdge[] };
+  relations: { edges: { relationType: string; node: { id: number; title: { romaji: string; english: string | null }; coverImage: { large: string }; format: string | null; averageScore: number | null } }[] };
+}
+
+export async function getAnimeDNA(id: number): Promise<AnimeDNAData> {
+  const data = (await queryAniList(
+    `query ($id: Int) {
+      Media(id: $id, type: ANIME) {
+        id
+        title { romaji english }
+        coverImage { large extraLarge }
+        bannerImage
+        description(asHtml: false)
+        genres
+        tags { name rank category }
+        averageScore
+        popularity
+        episodes
+        seasonYear
+        status
+        format
+        source
+        studios { nodes { id name isAnimationStudio } }
+        characters(sort: ROLE, perPage: 25) {
+          edges {
+            role
+            node { id name { full } image { medium } }
+            voiceActors(language: JAPANESE) { id name { full } image { medium } languageV2 }
+          }
+        }
+        staff(perPage: 20) {
+          edges {
+            role
+            node { id name { full } image { medium } }
+          }
+        }
+        relations {
+          edges {
+            relationType
+            node {
+              id
+              title { romaji english }
+              coverImage { large }
+              format
+              averageScore
+            }
+          }
+        }
+      }
+    }`,
+    { id }
+  )) as { Media: AnimeDNAData };
+  return data.Media;
+}
+
+// Get other anime by a voice actor
+export async function getAnimeByVA(vaId: number, perPage = 8): Promise<{ id: number; title: string; image: string; role: string; characterName: string }[]> {
+  const data = (await queryAniList(
+    `query ($id: Int, $perPage: Int) {
+      Staff(id: $id) {
+        characters(perPage: $perPage, sort: FAVOURITES_DESC) {
+          edges {
+            role
+            node { name { full } }
+            media { id title { english romaji } coverImage { large } }
+          }
+        }
+      }
+    }`,
+    { id: vaId, perPage }
+  )) as any;
+  const edges = data?.Staff?.characters?.edges || [];
+  return edges.flatMap((e: any) =>
+    (e.media || []).map((m: any) => ({
+      id: m.id,
+      title: m.title.english || m.title.romaji,
+      image: m.coverImage.large,
+      role: e.role,
+      characterName: e.node?.name?.full || "",
+    }))
+  ).slice(0, perPage);
+}
+
+// Get other anime by a staff member
+export async function getAnimeByStaff(staffId: number, perPage = 8): Promise<{ id: number; title: string; image: string; role: string }[]> {
+  const data = (await queryAniList(
+    `query ($id: Int, $perPage: Int) {
+      Staff(id: $id) {
+        staffMedia(perPage: $perPage, sort: POPULARITY_DESC, type: ANIME) {
+          edges {
+            staffRole
+            node { id title { english romaji } coverImage { large } }
+          }
+        }
+      }
+    }`,
+    { id: staffId, perPage }
+  )) as any;
+  const edges = data?.Staff?.staffMedia?.edges || [];
+  return edges.map((e: any) => ({
+    id: e.node.id,
+    title: e.node.title.english || e.node.title.romaji,
+    image: e.node.coverImage.large,
+    role: e.staffRole || "",
+  }));
+}
+
+// Get anime by studio
+export async function getAnimeByStudio(studioId: number, perPage = 12): Promise<{ id: number; title: string; image: string; score: number | null }[]> {
+  const data = (await queryAniList(
+    `query ($id: Int, $perPage: Int) {
+      Studio(id: $id) {
+        media(perPage: $perPage, sort: POPULARITY_DESC, isMain: true) {
+          nodes { id title { english romaji } coverImage { large } averageScore }
+        }
+      }
+    }`,
+    { id: studioId, perPage }
+  )) as any;
+  const nodes = data?.Studio?.media?.nodes || [];
+  return nodes.map((n: any) => ({
+    id: n.id,
+    title: n.title.english || n.title.romaji,
+    image: n.coverImage.large,
+    score: n.averageScore,
+  }));
 }
 
 export async function getTrending(page = 1, perPage = 20): Promise<AniListMedia[]> {
