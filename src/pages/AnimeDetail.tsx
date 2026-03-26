@@ -7,7 +7,7 @@ import Comments from "@/components/Comments";
 import { getImdbId } from "@/lib/api";
 import { addToWatchlist, removeFromWatchlist, isInWatchlist } from "@/lib/watchlist";
 import { useAuth } from "@/hooks/useAuth";
-import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers, Dna } from "lucide-react";
+import { Play, Plus, Check, Share2, Loader2, Calendar, Film, Clock, Star, ArrowLeft, Layers, Dna, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 const AnimeDetail = () => {
@@ -20,11 +20,14 @@ const AnimeDetail = () => {
   const [recommendations, setRecommendations] = useState<AniListMedia[]>([]);
   const [relatedSeasons, setRelatedSeasons] = useState<{ id: number; title: string; relationType: string; format: string | null; status: string | null; coverImage: string; seasonYear: number | null }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [inList, setInList] = useState(false);
+  const [activeChunk, setActiveChunk] = useState(0);
 
-  useEffect(() => {
+  const loadAnime = () => {
     if (!animeId) return;
     setLoading(true);
+    setError(false);
     setImdbId(null);
     setRecommendations([]);
     setRelatedSeasons([]);
@@ -43,8 +46,14 @@ const AnimeDetail = () => {
           .then(setRelatedSeasons)
           .catch(() => setRelatedSeasons([]));
       })
-      .catch(() => {})
+      .catch(() => {
+        setError(true);
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadAnime();
   }, [animeId]);
 
   useEffect(() => {
@@ -79,26 +88,41 @@ const AnimeDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="flex items-center justify-center pt-32">
+        <div className="flex flex-col items-center justify-center pt-32 gap-3">
           <Loader2 className="animate-spin text-primary" size={40} />
+          <p className="text-sm text-muted-foreground">Loading anime details...</p>
         </div>
       </div>
     );
   }
 
-  if (!anime) {
+  if (error || !anime) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="text-center pt-32 text-muted-foreground">Anime not found</div>
+        <div className="flex flex-col items-center justify-center pt-32 gap-4">
+          <p className="text-muted-foreground">Couldn't load this anime. The API may be temporarily busy.</p>
+          <button
+            onClick={loadAnime}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-opacity active:scale-[0.97]"
+          >
+            <RefreshCw size={16} />
+            Try Again
+          </button>
+          <Link to="/" className="text-sm text-primary hover:underline">← Back to Home</Link>
+        </div>
       </div>
     );
   }
 
   const title = anime.title.english || anime.title.romaji;
   const jpTitle = anime.title.english ? anime.title.romaji : null;
-  const episodeCount = anime.episodes || anime.nextAiringEpisode?.episode || 12;
-  const studio = anime.studios?.nodes?.[0]?.name;
+  const episodeCount = anime?.episodes || anime?.nextAiringEpisode?.episode || 12;
+  const CHUNK = 100;
+  const totalChunks = Math.ceil(episodeCount / CHUNK);
+  const epStart = activeChunk * CHUNK + 1;
+  const epEnd = Math.min((activeChunk + 1) * CHUNK, episodeCount);
+  const studio = anime?.studios?.nodes?.[0]?.name;
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,7 +144,6 @@ const AnimeDetail = () => {
         </Link>
 
         <div className="flex flex-col sm:flex-row gap-6">
-          {/* Poster */}
           <div className="flex-shrink-0 w-40 sm:w-48">
             <img
               src={anime.coverImage.extraLarge || anime.coverImage.large}
@@ -129,7 +152,6 @@ const AnimeDetail = () => {
             />
           </div>
 
-          {/* Info */}
           <div className="flex-1 animate-fade-in-up">
             <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mb-1 leading-[1.1]">
               {title}
@@ -173,7 +195,7 @@ const AnimeDetail = () => {
               {stripHtml(anime.description)}
             </p>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {imdbId ? (
                 <Link
                   to={`/watch/${animeId}?imdb=${imdbId}&ep=1&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}&total=${episodeCount}`}
@@ -191,7 +213,7 @@ const AnimeDetail = () => {
 
               <button
                 onClick={toggleWatchlist}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg glass border border-white/10 text-foreground font-medium text-sm hover:bg-white/10 transition-colors active:scale-[0.97]"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg glass border border-border text-foreground font-medium text-sm hover:bg-muted transition-colors active:scale-[0.97]"
               >
                 {inList ? <Check size={16} /> : <Plus size={16} />}
                 {inList ? "In List" : "Add to List"}
@@ -199,7 +221,7 @@ const AnimeDetail = () => {
 
               <button
                 onClick={handleShare}
-                className="w-9 h-9 rounded-full glass border border-white/10 flex items-center justify-center text-foreground hover:bg-white/10 transition-colors active:scale-95"
+                className="w-9 h-9 rounded-full glass border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors active:scale-95"
               >
                 <Share2 size={14} />
               </button>
@@ -245,40 +267,62 @@ const AnimeDetail = () => {
           </div>
         )}
 
-        {/* Episodes */}
+        {/* Episodes with pagination */}
         <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">Episodes</h2>
         {imdbId ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            {Array.from({ length: episodeCount }, (_, i) => i + 1).map((ep, idx) => (
-              <Link
-                key={ep}
-                to={`/watch/${animeId}?imdb=${imdbId}&ep=${ep}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}&total=${episodeCount}`}
-                className="glass glass-hover rounded-xl p-3 flex items-center gap-3 group active:scale-[0.97] transition-all animate-fade-in-up"
-                style={{ animationDelay: `${Math.min(idx * 20, 400)}ms` }}
-              >
-                <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                  <img src={anime.coverImage.large} alt={`EP ${ep}`} className="w-full h-full object-cover opacity-60" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Play size={12} fill="currentColor" className="text-foreground group-hover:text-primary transition-colors" />
+          <div>
+            {totalChunks > 1 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {Array.from({ length: totalChunks }, (_, i) => {
+                  const rs = i * CHUNK + 1;
+                  const re = Math.min((i + 1) * CHUNK, episodeCount);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setActiveChunk(i)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        activeChunk === i
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {rs}–{re}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+              {Array.from({ length: epEnd - epStart + 1 }, (_, i) => epStart + i).map((ep, idx) => (
+                <Link
+                  key={ep}
+                  to={`/watch/${animeId}?imdb=${imdbId}&ep=${ep}&title=${encodeURIComponent(title)}&img=${encodeURIComponent(anime.coverImage.large)}&total=${episodeCount}`}
+                  className="glass glass-hover rounded-xl p-3 flex items-center gap-3 group active:scale-[0.97] transition-all animate-fade-in-up"
+                  style={{ animationDelay: `${Math.min(idx * 15, 300)}ms` }}
+                >
+                  <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    <img src={anime.coverImage.large} alt={`EP ${ep}`} className="w-full h-full object-cover opacity-60" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Play size={12} fill="currentColor" className="text-foreground group-hover:text-primary transition-colors" />
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-foreground">Episode {ep}</p>
-                  <p className="text-[10px] text-muted-foreground">{anime.duration || 24} min</p>
-                </div>
-              </Link>
-            ))}
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Episode {ep}</p>
+                    <p className="text-[10px] text-muted-foreground">{anime.duration || 24} min</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="glass rounded-xl p-8 text-center">
+            <Loader2 className="animate-spin text-primary mx-auto mb-2" size={24} />
             <p className="text-muted-foreground text-sm">Loading episodes...</p>
           </div>
         )}
 
-        {/* Comments */}
         <Comments animeId={animeId} />
 
-        {/* Recommendations */}
         {recommendations.length > 0 && (
           <>
             <h2 className="font-display text-lg font-semibold text-foreground mt-10 mb-4">✨ More Like This</h2>

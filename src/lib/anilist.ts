@@ -1,4 +1,4 @@
-// AniList GraphQL API integration
+// AniList GraphQL API integration with request queue to prevent rate limiting
 
 const ANILIST_URL = "https://graphql.anilist.co";
 
@@ -36,7 +36,21 @@ const MEDIA_FIELDS = `
   nextAiringEpisode { episode }
 `;
 
-async function queryAniList(query: string, variables: Record<string, unknown>, retries = 3): Promise<unknown> {
+// --- Request queue to serialize AniList calls and avoid 429s ---
+let requestQueue: Promise<unknown> = Promise.resolve();
+const MIN_DELAY_MS = 700; // minimum gap between requests
+
+function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+  const task = requestQueue.then(async () => {
+    await new Promise((r) => setTimeout(r, MIN_DELAY_MS));
+    return fn();
+  });
+  // Always resolve the chain so one failure doesn't block the queue
+  requestQueue = task.catch(() => {});
+  return task;
+}
+
+async function _queryAniList(query: string, variables: Record<string, unknown>, retries = 3): Promise<unknown> {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const res = await fetch(ANILIST_URL, {
@@ -45,13 +59,13 @@ async function queryAniList(query: string, variables: Record<string, unknown>, r
         body: JSON.stringify({ query, variables }),
       });
       if (res.status === 429) {
-        const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
-        await new Promise((r) => setTimeout(r, retryAfter * 1000));
+        const retryAfter = parseInt(res.headers.get("Retry-After") || "3", 10);
+        await new Promise((r) => setTimeout(r, Math.max(retryAfter * 1000, 2000)));
         continue;
       }
       if (!res.ok) {
         if (attempt < retries - 1) {
-          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
           continue;
         }
         throw new Error(`AniList query failed: ${res.status}`);
@@ -61,7 +75,7 @@ async function queryAniList(query: string, variables: Record<string, unknown>, r
         console.warn("AniList errors:", data.errors);
         if (data.data) return data.data;
         if (attempt < retries - 1) {
-          await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
           continue;
         }
         throw new Error("AniList returned errors");
@@ -69,13 +83,18 @@ async function queryAniList(query: string, variables: Record<string, unknown>, r
       return data?.data;
     } catch (err) {
       if (attempt < retries - 1) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
         continue;
       }
       throw err;
     }
   }
   throw new Error("AniList query failed after retries");
+}
+
+// All external calls go through the queue
+function queryAniList(query: string, variables: Record<string, unknown>, retries = 3): Promise<unknown> {
+  return enqueue(() => _queryAniList(query, variables, retries));
 }
 
 // Extended query for AnimeDNA - characters, staff, studios
@@ -168,7 +187,6 @@ export async function getAnimeDNA(id: number): Promise<AnimeDNAData> {
   return data.Media;
 }
 
-// Get other anime by a voice actor
 export async function getAnimeByVA(vaId: number, perPage = 8): Promise<{ id: number; title: string; image: string; role: string; characterName: string }[]> {
   const data = (await queryAniList(
     `query ($id: Int, $perPage: Int) {
@@ -196,7 +214,6 @@ export async function getAnimeByVA(vaId: number, perPage = 8): Promise<{ id: num
   ).slice(0, perPage);
 }
 
-// Get other anime by a staff member
 export async function getAnimeByStaff(staffId: number, perPage = 8): Promise<{ id: number; title: string; image: string; role: string }[]> {
   const data = (await queryAniList(
     `query ($id: Int, $perPage: Int) {
@@ -220,7 +237,6 @@ export async function getAnimeByStaff(staffId: number, perPage = 8): Promise<{ i
   }));
 }
 
-// Get anime by studio
 export async function getAnimeByStudio(studioId: number, perPage = 12): Promise<{ id: number; title: string; image: string; score: number | null }[]> {
   const data = (await queryAniList(
     `query ($id: Int, $perPage: Int) {
@@ -239,6 +255,48 @@ export async function getAnimeByStudio(studioId: number, perPage = 12): Promise<
     image: n.coverImage.large,
     score: n.averageScore,
   }));
+}
+
+// --- Batched homepage query: fetch trending + popular + topRated + newReleases + airing in ONE request ---
+export async function getHomepageData(): Promise<{
+  trending: AniListMedia[];
+  popular: AniListMedia[];
+  topRated: AniListMedia[];
+  newReleases: AniListMedia[];
+  airing: AniListMedia[];
+}> {
+  const currentYear = new Date().getFullYear();
+  const data = (await queryAniList(
+    `query ($year: Int) {
+      trending: Page(page: 1, perPage: 20) {
+        media(type: ANIME, sort: TRENDING_DESC, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+      popular: Page(page: 1, perPage: 20) {
+        media(type: ANIME, sort: POPULARITY_DESC, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+      topRated: Page(page: 1, perPage: 20) {
+        media(type: ANIME, sort: SCORE_DESC, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+      newReleases: Page(page: 1, perPage: 20) {
+        media(type: ANIME, sort: START_DATE_DESC, seasonYear: $year, isAdult: false) { ${MEDIA_FIELDS} }
+      }
+      airing: Page(page: 1, perPage: 12) {
+        media(type: ANIME, status: RELEASING, sort: POPULARITY_DESC, isAdult: false) {
+          ${MEDIA_FIELDS}
+          nextAiringEpisode { episode airingAt timeUntilAiring }
+        }
+      }
+    }`,
+    { year: currentYear }
+  )) as any;
+
+  return {
+    trending: data?.trending?.media || [],
+    popular: data?.popular?.media || [],
+    topRated: data?.topRated?.media || [],
+    newReleases: data?.newReleases?.media || [],
+    airing: data?.airing?.media || [],
+  };
 }
 
 export async function getTrending(page = 1, perPage = 20): Promise<AniListMedia[]> {
@@ -365,9 +423,7 @@ export async function getByGenre(genre: string, perPage = 20): Promise<AniListMe
   return data.Page.media;
 }
 
-// Get recommendations for an anime by its genres
 export async function getRecommendations(genres: string[], excludeId: number, perPage = 12): Promise<AniListMedia[]> {
-  // Use the first genre for recommendations
   const genre = genres[0];
   if (!genre) return [];
   const data = (await queryAniList(
@@ -381,19 +437,11 @@ export async function getRecommendations(genres: string[], excludeId: number, pe
   return data.Page.media.filter((m) => m.id !== excludeId).slice(0, perPage);
 }
 
-// Extended media fields with airing schedule
 export interface AniListMediaExtended extends AniListMedia {
   nextAiringEpisode: { episode: number; airingAt: number; timeUntilAiring: number } | null;
   season: string | null;
 }
 
-const MEDIA_FIELDS_EXT = `
-  ${MEDIA_FIELDS}
-  season
-  nextAiringEpisode { episode airingAt timeUntilAiring }
-`;
-
-// Seasonal anime
 export async function getSeasonalAnime(
   season: "WINTER" | "SPRING" | "SUMMER" | "FALL",
   year: number,
@@ -411,7 +459,6 @@ export async function getSeasonalAnime(
   return data.Page.media;
 }
 
-// Random anime
 export async function getRandomAnime(): Promise<AniListMedia> {
   const randomPage = Math.floor(Math.random() * 100) + 1;
   const data = (await queryAniList(
@@ -425,7 +472,6 @@ export async function getRandomAnime(): Promise<AniListMedia> {
   return data.Page.media[0];
 }
 
-// Airing schedule (currently airing anime)
 export async function getAiringSchedule(perPage = 12): Promise<AniListMedia[]> {
   const data = (await queryAniList(
     `query ($perPage: Int) {
@@ -477,7 +523,6 @@ export async function getRelatedSeasons(animeId: number): Promise<{ id: number; 
     }));
 }
 
-// Smart recommendations based on user's favorite genres
 export async function getSmartRecommendations(genres: string[], excludeIds: number[] = [], perPage = 20): Promise<AniListMedia[]> {
   if (genres.length === 0) return [];
   const topGenres = genres.slice(0, 3);
