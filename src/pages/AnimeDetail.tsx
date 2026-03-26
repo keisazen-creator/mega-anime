@@ -122,6 +122,7 @@ const AnimeDetail = () => {
   const totalChunks = Math.ceil(episodeCount / CHUNK);
   const epStart = activeChunk * CHUNK + 1;
   const epEnd = Math.min((activeChunk + 1) * CHUNK, episodeCount);
+  const studio = anime?.studios?.nodes?.[0]?.name;
 
   return (
     <div className="min-h-screen bg-background">
