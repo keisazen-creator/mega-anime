@@ -117,14 +117,9 @@ const AnimeDetail = () => {
 
   const title = anime.title.english || anime.title.romaji;
   const jpTitle = anime.title.english ? anime.title.romaji : null;
-  const episodeCount = anime.episodes || anime.nextAiringEpisode?.episode || 12;
-  const studio = anime.studios?.nodes?.[0]?.name;
-
-  // Episode pagination for detail page
+  const episodeCount = anime?.episodes || anime?.nextAiringEpisode?.episode || 12;
   const CHUNK = 100;
   const totalChunks = Math.ceil(episodeCount / CHUNK);
-
-  const [activeChunk, setActiveChunk] = useState(0);
   const epStart = activeChunk * CHUNK + 1;
   const epEnd = Math.min((activeChunk + 1) * CHUNK, episodeCount);
 
